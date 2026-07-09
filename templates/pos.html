@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karavan Market — Point of Sale</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:   { 900: '#0F211D', 800: '#16302A', 700: '#1E3B33', 600: '#2A4E44' },
+          paper: { 50: '#F6F5F0', 100: '#EFEEE7', 200: '#E4E2D8' },
+          brand: { 400: '#FDBB3D', 500: '#FCAB10', 600: '#E0960C', 700: '#A66E08' },
+          pine:  { 500: '#3E7C6A', 600: '#336657', 700: '#2A5548' },
+          rust:  { 500: '#C1483A', 600: '#A83B2F' },
+        },
+        fontFamily: {
+          display: ['"Space Grotesk"', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+        },
+        boxShadow: {
+          ticket: '0 20px 40px -18px rgba(15, 33, 29, 0.35)',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { -webkit-font-smoothing: antialiased; }
+
+  /* Torn-ticket edge, colored to match the column behind the ticket */
+  .ticket-notch { position: relative; }
+  .ticket-notch::before,
+  .ticket-notch::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 11px;
+    background:
+      linear-gradient(-45deg, #F6F5F0 8px, transparent 0) 0 0/16px 16px,
+      linear-gradient(45deg, #F6F5F0 8px, transparent 0) 0 0/16px 16px;
+    background-repeat: repeat-x;
+  }
+  .ticket-notch::before { top: -1px; }
+  .ticket-notch::after  { bottom: -1px; transform: scaleY(-1); }
+
+  .dash-divider { border-top: 2px dashed #DBD8CC; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D8D5C8; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #C7C3B2; }
+
+  .nav-item[data-active="true"] {
+    background-color: #16302A;
+    color: #FCAB10;
+  }
+
+  .card-badge.flex { display: flex; }
+
+  .qty-btn:active { transform: scale(0.92); }
+  .product-card:active { transform: scale(0.98); }
+
+  #toast { transition: transform 0.35s ease, opacity 0.35s ease; }
+  #toast[data-show="false"] { transform: translateY(16px); opacity: 0; pointer-events: none; }
+  #toast[data-show="true"]  { transform: translateY(0);    opacity: 1; }
+
+  :focus-visible { outline: 2px solid #FCAB10; outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+
+<body class="font-body bg-paper-50 text-ink-900 h-screen overflow-hidden">
+
+<div class="flex h-screen">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="w-44 shrink-0 bg-ink-900 text-paper-100 flex flex-col py-6 px-3">
+    <div class="px-2 mb-8">
+      <p class="font-display font-semibold tracking-wide text-paper-50">KARAVAN</p>
+      <p class="text-[10px] tracking-widest text-paper-100/40 uppercase">Market</p>
+    </div>
+
+    <nav class="flex flex-col gap-1">
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
+      <a href="#" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Point of Sale</a>
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Expenses</a>
+    </nav>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="flex-1 flex min-w-0">
+
+    <!-- Product column -->
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <!-- Top bar -->
+      <header class="px-8 pt-6 pb-4 shrink-0">
+        <div class="flex items-start justify-between gap-6 flex-wrap">
+          <div>
+            <h1 class="font-display text-2xl font-semibold text-ink-900">Point of Sale</h1>
+            <p id="todayDate" class="text-sm text-ink-900/50 mt-0.5"></p>
+          </div>
+          <span id="clock" class="font-mono text-sm text-ink-900/60 hidden sm:block"></span>
+        </div>
+
+        <!-- Scanner / search input — always focused, ready for a barcode or QR scanner -->
+        <div class="mt-5 max-w-md">
+          <input id="searchInput" type="text" autofocus autocomplete="off"
+            placeholder="Scan barcode or type a product name, then press Enter…"
+            class="w-full px-4 py-3 rounded-xl bg-white border-2 border-brand-500/60 text-sm font-mono placeholder:font-body placeholder:text-ink-900/35 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+        </div>
+      </header>
+
+      <!-- Product grid — plain static HTML, one card per product -->
+      <div id="productGrid" class="flex-1 overflow-y-auto px-8 pb-8 pt-2 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 content-start">
+
+        <div id="noMatches" class="hidden col-span-full flex flex-col items-center justify-center text-center py-20 text-ink-900/40">
+          <p class="text-sm font-medium">No matches found</p>
+        </div>
+
+        {% for product in products %}
+        {% if product.weight_based %}
+        <button type="button" onclick="openWeightModal({{product.id}}, '{{product.name}}', {{product.sales_price}}, '{{product.barcode}}')" data-name="{{product.name|lower}}" data-barcode="{{product.barcode}}"
+          class="product-card relative text-left bg-white border border-paper-200 rounded-xl p-4 flex flex-col gap-2 hover:border-brand-500 hover:shadow-md hover:-translate-y-0.5 transition">
+        
+          <span class="card-badge hidden absolute -top-2 -right-2 px-2 h-6 rounded-full text-[10px] bg-brand-500 text-ink-900 font-mono font-bold items-center justify-center shadow"></span>
+          <p class="text-sm font-semibold text-ink-900 leading-snug">{{product.name}}</p>
+          <p class="text-[11px] text-ink-900/40 font-mono">{{product.barcode}}</p>
+          <p class="font-mono text-sm font-bold text-ink-900 mt-auto pt-1">{{ product.sales_price }} UZS/kg</p>
+        </button>
+        {% else %}
+        <button type="button" onclick="addToCart({{product.id}}, '{{product.name}}', {{product.sales_price}}, '{{product.barcode}}')" data-name="{{product.name|lower}}" data-barcode="{{product.barcode}}"
+          class="product-card relative text-left bg-white border border-paper-200 rounded-xl p-4 flex flex-col gap-2 hover:border-brand-500 hover:shadow-md hover:-translate-y-0.5 transition">
+          <span class="card-badge hidden absolute -top-2 -right-2 w-6 h-6 rounded-full text-[11px] bg-brand-500 text-ink-900 font-mono font-bold items-center justify-center shadow"></span>
+          <p class="text-sm font-semibold text-ink-900 leading-snug">{{product.name}}</p>
+          <p class="text-[11px] text-ink-900/40 font-mono">{{product.barcode}}</p>
+          <p class="font-mono text-sm font-bold text-ink-900 mt-auto pt-1">{{ product.sales_price }} UZS</p>
+        </button>
+        {% endif %}
+        {% endfor %}
+
+      </div>
+    </div>
+
+    <!-- ============ SALE TICKET ============ -->
+    <form id="saleForm" method="POST" action="{% url 'pos' %}" class="w-[26rem] shrink-0 flex flex-col min-h-0">
+      {% csrf_token %}
+      <div  class="flex-1 bg-paper-100 border-l border-paper-200 flex flex-col p-6 min-h-0">
+
+        <div class="flex-1 min-h-0 bg-white rounded-2xl shadow-ticket ticket-notch flex flex-col overflow-hidden">
+
+          <!-- Ticket header -->
+          <div class="px-6 pt-6 pb-4 shrink-0">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sale</p>
+                <p id="orderNumber" class="font-mono text-lg font-semibold text-ink-900">#{{current_sale_id}}</p>
+              </div>
+              <button type="button" onclick="clearOrder()" id="clearBtn" class="text-xs font-medium text-rust-500 hover:text-rust-600 hidden">Clear</button>
+            </div>
+
+            <input type="text" placeholder="Member ID (optional)"
+              class="mt-3 w-full text-sm px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 placeholder:text-ink-900/35 focus:outline-none focus:ring-2 focus:ring-brand-500">
+          </div>
+
+          <div class="dash-divider mx-6"></div>
+
+          <!-- Cart items -->
+          <div id="cartItems" class="flex-1 overflow-y-auto px-6 py-4 min-h-0"></div>
+
+          <div class="dash-divider mx-6"></div>
+
+          <!-- Totals -->
+          <div class="px-6 py-4 shrink-0 space-y-1.5">
+            <div class="flex justify-between items-baseline pt-2">
+              <span class="font-display font-semibold text-ink-900">Total</span>
+              <span id="totalAmt" class="font-mono text-2xl font-semibold text-ink-900">0 UZS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charge -->
+        <div class="shrink-0 pt-4 space-y-3">
+          <button type="button" id="chargeBtn" onclick="submitSale()"
+            class="w-full py-4 rounded-xl bg-pine-600 hover:bg-pine-700 text-white font-display font-semibold text-lg transition active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+            Charge <span id="chargeAmt">0 UZS</span>
+          </button>
+        </div>
+      </div>
+      <div id="cartFields"></div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" data-show="false" class="fixed bottom-6 right-6 bg-ink-900 text-paper-50 px-5 py-3.5 rounded-xl shadow-lg z-50">
+  <span id="toastText" class="text-sm font-medium"></span>
+</div>
+
+<!-- Weight entry modal (for kg-priced produce / deli items) -->
+<div id="weightModal" data-show="false" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
+  <div onclick="closeWeightModal()" class="absolute inset-0 bg-ink-900/40"></div>
+  <div class="relative bg-white rounded-2xl shadow-ticket w-full max-w-sm mx-4 p-6">
+    <p id="wmName" class="font-display font-semibold text-ink-900">Product name</p>
+    <p id="wmMeta" class="text-xs text-ink-900/50 font-mono mt-0.5">PLU 0000 · 0 UZS/kg</p>
+
+    <div class="grid grid-cols-2 gap-3 mt-5">
+      <label class="block">
+        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Weight (kg)</span>
+        <input id="wmWeightInput" type="number" min="0" step="0.01" inputmode="decimal"
+          class="mt-1 w-full px-3 py-2.5 rounded-lg bg-paper-50 border border-paper-200 font-mono text-base focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </label>
+      <label class="block">
+        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Amount (UZS)</span>
+        <input id="wmAmountInput" type="number" min="0" step="0.01" inputmode="decimal"
+          class="mt-1 w-full px-3 py-2.5 rounded-lg bg-paper-50 border border-paper-200 font-mono text-base focus:outline-none focus:ring-2 focus:ring-brand-500">
+      </label>
+    </div>
+
+    <div class="flex gap-2 mt-3">
+      <button type="button" onclick="applyWeightPreset(0.25)" class="flex-1 text-xs font-mono py-1.5 rounded-lg border border-paper-200 hover:border-brand-500">0.25 kg</button>
+      <button type="button" onclick="applyWeightPreset(0.5)" class="flex-1 text-xs font-mono py-1.5 rounded-lg border border-paper-200 hover:border-brand-500">0.5 kg</button>
+      <button type="button" onclick="applyWeightPreset(1)" class="flex-1 text-xs font-mono py-1.5 rounded-lg border border-paper-200 hover:border-brand-500">1 kg</button>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      <button type="button" onclick="closeWeightModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
+      <button type="button" onclick="confirmWeight()" class="flex-1 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">Add to sale</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const fmt = n => Math.round(n).toLocaleString('en-US') + ' UZS';
+
+  let cart = [];
+  let orderNumber = {{current_sale_id}};
+
+  function addToCart(id, name, price, barcode) {
+    const existing = cart.find(c => c.barcode === barcode);
+    if (existing) existing.qty += 1;
+    else cart.push({ id, barcode, name, price, qty: 1 });
+    renderCart();
+    updateCardBadge(barcode);
+  }
+
+  function changeQty(barcode, delta) {
+    const item = cart.find(c => c.barcode === barcode);
+    if (!item) return;
+    item.qty += delta;
+    if (item.qty <= 0) cart = cart.filter(c => c.barcode !== barcode);
+    renderCart();
+    updateCardBadge(barcode);
+  }
+
+  function removeFromCart(barcode) {
+    cart = cart.filter(c => c.barcode !== barcode);
+    renderCart();
+    updateCardBadge(barcode);
+  }
+
+  function clearOrder() {
+    const barcodes = cart.map(c => c.barcode);
+    cart = [];
+    renderCart();
+    barcodes.forEach(updateCardBadge);
+  }
+
+  function updateCardBadge(barcode) {
+    const card = document.querySelector(`#productGrid [data-barcode="${barcode}"]`);
+    if (!card) return;
+    const badge = card.querySelector('.card-badge');
+    const item = cart.find(c => c.barcode === barcode);
+    if (!item) {
+      badge.classList.add('hidden');
+      badge.classList.remove('flex');
+      badge.textContent = '';
+      return;
+    }
+    badge.textContent = item.unit === 'kg' ? item.weight.toFixed(2) + 'kg' : item.qty;
+    badge.classList.remove('hidden');
+    badge.classList.add('flex');
+  }
+
+  function renderCart() {
+    const el = document.getElementById('cartItems');
+    const clearBtn = document.getElementById('clearBtn');
+    clearBtn.classList.toggle('hidden', cart.length === 0);
+
+    if (cart.length === 0) {
+      el.innerHTML = `
+        <div class="h-full flex flex-col items-center justify-center text-center py-10 text-ink-900/35">
+          <p class="text-sm font-medium text-ink-900/50">This sale is empty</p>
+          <p class="text-xs mt-1 max-w-[16rem]">Scan a barcode or select an item to begin.</p>
+        </div>`;
+    } else {
+      el.innerHTML = cart.map(item => {
+        const isKg = item.unit === 'kg';
+        const lineTotal = isKg ? item.price * item.weight : item.price * item.qty;
+        return `
+        <div class="flex items-center gap-3 py-2.5">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-ink-900 truncate">${item.name}</p>
+            <p class="text-xs text-ink-900/45 font-mono">${isKg ? `${item.weight.toFixed(2)} kg × ${fmt(item.price)}/kg` : `${fmt(item.price)} each`}</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${isKg
+              ? `<button type="button" onclick="openWeightModal(${item.id}, '${item.name}', ${item.price}, '${item.barcode}')" class="qty-btn text-xs font-medium px-2.5 py-1 rounded-md border border-paper-200 text-ink-900/60 hover:bg-paper-50">Edit</button>`
+              : `<button type="button" onclick="changeQty('${item.barcode}', -1)" class="qty-btn w-6 h-6 rounded-md border border-paper-200 flex items-center justify-center text-ink-900/60 hover:bg-paper-50">−</button>
+                 <span class="w-5 text-center text-sm font-mono">${item.qty}</span>
+                 <button type="button" onclick="changeQty('${item.barcode}', 1)" class="qty-btn w-6 h-6 rounded-md border border-paper-200 flex items-center justify-center text-ink-900/60 hover:bg-paper-50">+</button>`}
+          </div>
+          <p class="w-14 text-right font-mono text-sm font-semibold shrink-0">${fmt(lineTotal)}</p>
+          <button type="button" onclick="removeFromCart('${item.barcode}')" class="w-5 text-center text-ink-900/25 hover:text-rust-500 shrink-0">×</button>
+        </div>`;
+      }).join('');
+    }
+
+    const total = cart.reduce((s, c) => s + (c.unit === 'kg' ? c.price * c.weight : c.price * c.qty), 0);
+
+    document.getElementById('totalAmt').textContent = fmt(total);
+    document.getElementById('chargeAmt').textContent = fmt(total);
+    document.getElementById('chargeBtn').disabled = cart.length === 0;
+  }
+
+  // ---- Weight (kg) products ----
+  let wmId = null, wmName = '', wmPrice = 0, wmBarcode = null;
+
+  function openWeightModal(id, name, price, barcode) {
+    wmId = id; wmName = name; wmPrice = price; wmBarcode = barcode;
+
+    document.getElementById('wmName').textContent = name;
+    document.getElementById('wmMeta').textContent = `PLU ${barcode} · ${fmt(price)}/kg`;
+
+    const existing = cart.find(c => c.barcode === barcode);
+    const startWeight = existing ? existing.weight : 0;
+    document.getElementById('wmWeightInput').value = startWeight ? startWeight.toFixed(2) : '';
+    document.getElementById('wmAmountInput').value = startWeight ? (startWeight * price).toFixed(2) : '';
+
+    const modal = document.getElementById('weightModal');
+    modal.dataset.show = 'true';
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    document.getElementById('wmWeightInput').focus();
+  }
+
+  function closeWeightModal() {
+    const modal = document.getElementById('weightModal');
+    modal.dataset.show = 'false';
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    refocusSearch();
+  }
+
+  document.getElementById('wmWeightInput').addEventListener('input', e => {
+    const w = parseFloat(e.target.value);
+    document.getElementById('wmAmountInput').value = isNaN(w) ? '' : (w * wmPrice).toFixed(2);
+  });
+
+  document.getElementById('wmAmountInput').addEventListener('input', e => {
+    const amt = parseFloat(e.target.value);
+    document.getElementById('wmWeightInput').value = isNaN(amt) ? '' : (amt / wmPrice).toFixed(2);
+  });
+
+  function applyWeightPreset(kg) {
+    document.getElementById('wmWeightInput').value = kg.toFixed(2);
+    document.getElementById('wmAmountInput').value = (kg * wmPrice).toFixed(2);
+  }
+
+  function confirmWeight() {
+    const weight = parseFloat(document.getElementById('wmWeightInput').value);
+    cart = cart.filter(c => c.barcode !== wmBarcode);
+    if (!isNaN(weight) && weight > 0) {
+      cart.push({ id: wmId, barcode: wmBarcode, name: wmName, price: wmPrice, unit: 'kg', weight });
+    }
+    const barcode = wmBarcode;
+    closeWeightModal();
+    renderCart();
+    updateCardBadge(barcode);
+  }
+
+  let toastTimer;
+  function showToast(text) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').textContent = text;
+    toast.dataset.show = 'true';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.dataset.show = 'false'; }, 3200);
+  }
+
+  const searchInput = document.getElementById('searchInput');
+  const allCards = () => document.querySelectorAll('#productGrid .product-card');
+
+  function filterGrid(raw) {
+    const term = raw.trim().toLowerCase();
+    let visibleCount = 0;
+    allCards().forEach(card => {
+      const match = card.dataset.name.includes(term) || card.dataset.barcode.includes(term);
+      card.classList.toggle('hidden', !match);
+      if (match) visibleCount++;
+    });
+    document.getElementById('noMatches').classList.toggle('hidden', visibleCount !== 0);
+  }
+
+  searchInput.addEventListener('input', e => filterGrid(e.target.value));
+
+  searchInput.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const raw = searchInput.value.trim();
+    if (!raw) return;
+
+    let card = document.querySelector(`#productGrid [data-barcode="${raw}"]`);
+
+    if (!card) {
+      const visible = [...allCards()].filter(c => !c.classList.contains('hidden'));
+      if (visible.length === 1) card = visible[0];
+    }
+
+    if (!card) {
+      showToast(`No product found for "${raw}"`);
+      return;
+    }
+
+    card.click();
+    searchInput.value = '';
+    filterGrid('');
+  });
+
+  function refocusSearch() {
+    if (document.getElementById('weightModal').dataset.show === 'true') return;
+    searchInput.focus();
+  }
+
+  document.addEventListener('click', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    setTimeout(refocusSearch, 0);
+  });
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('todayDate').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  }
+
+  // Serialize the cart into hidden inputs and submit the form to Django.
+  // Each field name is repeated once per cart line, so request.POST.getlist('barcode')
+  // (etc.) on the server reconstructs the whole cart in order.
+  function buildCartPayload() {
+  return cart.reduce((acc, item) => {
+    acc[item.id] = {
+      barcode: item.barcode,
+      name: item.name,
+      price: item.price,
+      qty: item.unit === 'kg' ? null : item.qty,
+      weight: item.unit === 'kg' ? item.weight : null
+    };
+    return acc;
+  }, {});
+  }
+
+  function submitSale() {
+  if (cart.length === 0) return;
+
+  fetch("{% url 'pos' %}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+    },
+    body: JSON.stringify({ items: buildCartPayload() })
+  })
+  .then(r => {
+    if (!r.ok) throw new Error('Request failed');
+    return r.json();
+  })
+ .then(data => {
+    showToast('Sale completed - ' + fmt(data.sale_total));
+
+    const barcodes = cart.map(c => c.barcode);
+    cart = [];
+    renderCart();
+    barcodes.forEach(updateCardBadge);
+
+    orderNumber = data.next_sale_id;
+    document.getElementById('orderNumber').textContent = '#' + orderNumber;
+
+    searchInput.value = '';
+    filterGrid('');
+    refocusSearch();
+  })
+  .catch(err => {
+    console.error(err);
+    showToast('Failed to submit sale');
+  });
+  }
+
+  // init
+  renderCart();
+  updateClock();
+  setInterval(updateClock, 1000);
+  searchInput.focus();
+</script>
+
+</body>
+</html>
