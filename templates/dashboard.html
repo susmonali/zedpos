@@ -151,6 +151,83 @@
         </div>
       </div>
 
+          <!-- Period reports: Yesterday / 7 Days / Monthly, ticket-style panels -->
+      <div>
+        <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-3 px-1">Reports</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+          <!-- Yesterday -->
+          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
+            <div class="px-6 flex items-center justify-between mb-4">
+              <p class="font-display text-sm font-semibold text-ink-900">Yesterday</p>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Closed</span>
+            </div>
+            <div class="px-6">
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Income</p>
+              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">2,140,000 UZS</p>
+            </div>
+            <div class="dash-divider my-4 mx-6"></div>
+            <div class="px-6 grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
+                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">480,000 UZS</p>
+              </div>
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
+                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">88</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7 Days -->
+          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
+            <div class="px-6 flex items-center justify-between mb-4">
+              <p class="font-display text-sm font-semibold text-ink-900">7 Days</p>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Weekly</span>
+            </div>
+            <div class="px-6">
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Income</p>
+              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">14,860,000 UZS</p>
+            </div>
+            <div class="dash-divider my-4 mx-6"></div>
+            <div class="px-6 grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
+                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">3,120,000 UZS</p>
+              </div>
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
+                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">612</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly -->
+          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
+            <div class="px-6 flex items-center justify-between mb-4">
+              <p class="font-display text-sm font-semibold text-ink-900">Monthly</p>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5">30 days</span>
+            </div>
+            <div class="px-6">
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Income</p>
+              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">58,420,000 UZS</p>
+            </div>
+            <div class="dash-divider my-4 mx-6"></div>
+            <div class="px-6 grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
+                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">12,750,000 UZS</p>
+              </div>
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
+                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">2,384</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <!-- Sales by hour + Category mix -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -166,43 +243,11 @@
   <div id="chart-tooltip" class="absolute pointer-events-none opacity-0 bg-slate-900 text-white text-xs font-mono py-1 px-2 rounded shadow-md transition-opacity duration-150 -translate-x-1/2 -translate-y-full z-10"></div>
 </div>
         <!-- Category mix -->
-        <div class="bg-white border border-paper-200 rounded-2xl p-6">
-          <p class="text-sm font-semibold text-ink-900 mb-4">Category mix</p>
-          <div class="flex w-full h-3 rounded-full overflow-hidden">
-            <div class="bg-emerald-400" style="width:24%"></div>
-            <div class="bg-sky-400" style="width:18%"></div>
-            <div class="bg-amber-400" style="width:20%"></div>
-            <div class="bg-orange-400" style="width:12%"></div>
-            <div class="bg-cyan-400" style="width:15%"></div>
-            <div class="bg-violet-400" style="width:11%"></div>
-          </div>
-          <ul class="mt-4 space-y-2.5">
-            <li class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2 text-ink-900/70"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Produce</span>
-              <span class="font-mono text-ink-900/60">24% · $442</span>
-            </li>
-            <li class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2 text-ink-900/70"><span class="w-2 h-2 rounded-full bg-sky-400"></span>Dairy</span>
-              <span class="font-mono text-ink-900/60">18% · $332</span>
-            </li>
-            <li class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2 text-ink-900/70"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Pantry</span>
-              <span class="font-mono text-ink-900/60">20% · $369</span>
-            </li>
-            <li class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2 text-ink-900/70"><span class="w-2 h-2 rounded-full bg-orange-400"></span>Bakery</span>
-              <span class="font-mono text-ink-900/60">12% · $221</span>
-            </li>
-            <li class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2 text-ink-900/70"><span class="w-2 h-2 rounded-full bg-cyan-400"></span>Beverages</span>
-              <span class="font-mono text-ink-900/60">15% · $276</span>
-            </li>
-            <li class="flex items-center justify-between text-sm">
-              <span class="flex items-center gap-2 text-ink-900/70"><span class="w-2 h-2 rounded-full bg-violet-400"></span>Household</span>
-              <span class="font-mono text-ink-900/60">11% · $202</span>
-            </li>
-          </ul>
-        </div>
+          <div class="bg-white border border-paper-200 rounded-2xl p-6">
+  <p class="text-sm font-semibold text-ink-900 mb-4">Top sellers today</p>
+
+  <div id="top-sellers-container" class="space-y-3"></div>
+</div>
       </div>
 
       <!-- Low stock + Top sellers + Recent sales -->
@@ -255,87 +300,10 @@
             </div>
           </div>
 
-          <!-- Top sellers -->
-          <div class="bg-white border border-paper-200 rounded-2xl p-6">
-  <p class="text-sm font-semibold text-ink-900 mb-4">Top sellers today</p>
-
-  <div id="top-sellers-container" class="space-y-3"></div>
-</div>
-        </div>
-
-        <!-- Recent sales — printed as a running tape, echoing the POS receipt -->
-        <div class="bg-white rounded-2xl shadow-ticket ticket-notch flex flex-col overflow-hidden max-h-[29rem]">
-          <div class="px-6 pt-6 pb-4 shrink-0">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Recent sales</p>
-            <p class="font-mono text-lg font-semibold text-ink-900">Live tape</p>
-          </div>
-          <div class="dash-divider mx-6"></div>
-          <div class="flex-1 overflow-y-auto px-6 py-3 space-y-3">
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0252</span>
-              <span class="text-ink-900/60">4 items</span>
-              <span class="font-mono font-semibold text-ink-900">$31.85</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:58 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0251</span>
-              <span class="text-ink-900/60">1 item</span>
-              <span class="font-mono font-semibold text-ink-900">$4.99</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:52 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0250</span>
-              <span class="text-ink-900/60">9 items</span>
-              <span class="font-mono font-semibold text-ink-900">$67.40</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:47 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0249</span>
-              <span class="text-ink-900/60">2 items</span>
-              <span class="font-mono font-semibold text-ink-900">$12.28</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:41 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0248</span>
-              <span class="text-ink-900/60">6 items</span>
-              <span class="font-mono font-semibold text-ink-900">$44.15</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:33 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0247</span>
-              <span class="text-ink-900/60">3 items</span>
-              <span class="font-mono font-semibold text-ink-900">$28.40</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:21 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0246</span>
-              <span class="text-ink-900/60">7 items</span>
-              <span class="font-mono font-semibold text-ink-900">$54.10</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:14 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0245</span>
-              <span class="text-ink-900/60">1 item</span>
-              <span class="font-mono font-semibold text-ink-900">$6.99</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">3:09 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0244</span>
-              <span class="text-ink-900/60">12 items</span>
-              <span class="font-mono font-semibold text-ink-900">$88.75</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">2:58 PM</span>
-            </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="font-mono text-ink-900/40">#0243</span>
-              <span class="text-ink-900/60">2 items</span>
-              <span class="font-mono font-semibold text-ink-900">$14.20</span>
-              <span class="font-mono text-xs text-ink-900/35 w-14 text-right">2:46 PM</span>
-            </div>
-          </div>
-        </div>
       </div>
 
     </div>
+
   </div>
 </div>
 
@@ -348,6 +316,7 @@
   updateClock();
   setInterval(updateClock, 1000);
 </script>
+
 <script>
   const hourlyData = [
     {% for item in sales_by_hour %}
