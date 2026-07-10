@@ -1,6 +1,7 @@
+from django.db.models.functions import ExtractHour
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Sum, Avg
+from django.db.models import Sum, Avg, Count
 from django.utils.timezone import localdate, localtime
 from .models import *
 
@@ -48,6 +49,32 @@ def dashboard(request):
         items_sold_change = 100
     else:
         items_sold_change=0
+
+    #sales by hour
+    hour_totals = (today_sales.annotate(hour=ExtractHour('created_at'))
+                     .values('hour')
+                     .annotate(total=Sum('total'))
+                     .order_by('hour'))
+    sales_by_hour = []
+    hour_totals = {row['hour']: int(row['total']) for row in hour_totals}
+    for hour in range(0, 24):
+        total = hour_totals.get(hour, 0)
+        sales_by_hour.append({
+            "hour": hour,
+            "total": total,
+        })
+
+    #top sellers
+    saleitem = (SaleItem.objects.filter(sale__created_at__range=(today_midnight, now))
+                .values("product__name")
+                .annotate(total_price=Sum("price"))
+                ).order_by('-total_price')
+    top_sellers = []
+    for item in saleitem:
+        top_sellers.append({
+            "name": item["product__name"],
+            "total": item["total_price"],
+        })
     context = {
         "today_sales": today_sales,
         "yesterday_sales": yesterday_sales,
@@ -60,6 +87,8 @@ def dashboard(request):
         "items_sold": items_sold,
         "avg_percent_change": avg_percent_change,
         "items_sold_change": items_sold_change,
+        "sales_by_hour": sales_by_hour,
+        "top_sellers": top_sellers[:5],
     }
     return render(request, "dashboard.html", context)
 
