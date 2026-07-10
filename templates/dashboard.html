@@ -124,12 +124,16 @@
           <div class="px-6 py-5">
             <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Total Sales</p>
             <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{today_sales_total | intcomma}} UZS</p>
-            <p class="text-xs font-mono text-pine-600 mt-1">▲ {{percentage_change}}% vs yesterday {{ localtime.time }}</p>
+
+            <p class="text-xs font-mono {% if percentage_change >= 0 %}text-pine-600{% else %}text-red-600{% endif %} mt-1">
+                {% if percentage_change >= 0 %}▲{% else %}▼{% endif %} {{percentage_change | floatformat}}% vs yesterday {{ localtime.time }}
+            </p>
+
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
             <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
             <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ today_sales.count }}</p>
-            <p class="text-xs font-mono text-pine-600 mt-1">▲ {{ difference }} vs yesterday</p>
+            <p class="text-xs font-mono {% if difference >= 0 %}text-pine-600{% else %}text-red-600{% endif %} mt-1">{% if difference >= 0 %}▲{% else %}▼{% endif %} {{ difference }} vs yesterday</p>
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
             <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Avg Basket</p>

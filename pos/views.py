@@ -46,6 +46,11 @@ def dashboard(request):
 
 def point_of_sale(request):
     last_sale = Sale.objects.last()
+    from django.conf import settings
+    print(settings.USE_TZ, settings.TIME_ZONE)
+
+    from django.utils import timezone
+    print(timezone.localtime())
     context = {
         "products": Product.objects.all(),
         "current_sale_id": (last_sale.id + 1) if last_sale else 1

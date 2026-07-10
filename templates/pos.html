@@ -1,3 +1,4 @@
+{% load l10n %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,8 +96,8 @@
     </div>
 
     <nav class="flex flex-col gap-1">
-      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
-      <a href="#" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Point of Sale</a>
+      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
+      <a href="{% url 'pos' %}" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Point of Sale</a>
       <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
       <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Expenses</a>
     </nav>
@@ -135,16 +136,20 @@
 
         {% for product in products %}
         {% if product.weight_based %}
-        <button type="button" onclick="openWeightModal({{product.id}}, '{{product.name}}', {{product.sales_price}}, '{{product.barcode}}')" data-name="{{product.name|lower}}" data-barcode="{{product.barcode}}"
+        <button type="button" onclick="openWeightModal({{product.id}}, '{{product.name}}', {{product.sales_price | unlocalize}}, '{{product.barcode}}')" data-name="{{product.name|lower}}" data-barcode="{{product.barcode}}"
           class="product-card relative text-left bg-white border border-paper-200 rounded-xl p-4 flex flex-col gap-2 hover:border-brand-500 hover:shadow-md hover:-translate-y-0.5 transition">
         
           <span class="card-badge hidden absolute -top-2 -right-2 px-2 h-6 rounded-full text-[10px] bg-brand-500 text-ink-900 font-mono font-bold items-center justify-center shadow"></span>
           <p class="text-sm font-semibold text-ink-900 leading-snug">{{product.name}}</p>
           <p class="text-[11px] text-ink-900/40 font-mono">{{product.barcode}}</p>
-          <p class="font-mono text-sm font-bold text-ink-900 mt-auto pt-1">{{ product.sales_price }} UZS/kg</p>
+          <p class="font-mono text-sm font-bold text-ink-900 mt-auto pt-1">{{ product.sales_price|unlocalize }} UZS/kg</p>
         </button>
         {% else %}
-        <button type="button" onclick="addToCart({{product.id}}, '{{product.name}}', {{product.sales_price}}, '{{product.barcode}}')" data-name="{{product.name|lower}}" data-barcode="{{product.barcode}}"
+        <button type="button" data-id="{{product.id}}"
+  data-name="{{product.name}}"
+  data-price="{{product.sales_price|unlocalize}}"
+  data-barcode="{{product.barcode}}"
+  onclick="addToCart(this.dataset.id, this.dataset.name, parseFloat(this.dataset.price), this.dataset.barcode)"
           class="product-card relative text-left bg-white border border-paper-200 rounded-xl p-4 flex flex-col gap-2 hover:border-brand-500 hover:shadow-md hover:-translate-y-0.5 transition">
           <span class="card-badge hidden absolute -top-2 -right-2 w-6 h-6 rounded-full text-[11px] bg-brand-500 text-ink-900 font-mono font-bold items-center justify-center shadow"></span>
           <p class="text-sm font-semibold text-ink-900 leading-snug">{{product.name}}</p>

@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 class Product(models.Model):
@@ -13,11 +14,11 @@ class Product(models.Model):
         return self.name
 
 class Sale(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, auto_created=True)
+    created_at = models.DateTimeField()
     total = models.IntegerField()
 
     def __str__(self):
-        return f"{self.id} - {self.created_at}"
+        return f"{self.id} - {timezone.localtime(self.created_at)}"
 
 
 class SaleItem(models.Model):
