@@ -25,6 +25,7 @@ class SaleItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
     price = models.IntegerField()
+    qty = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.product.name
