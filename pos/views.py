@@ -1,8 +1,8 @@
 from django.db.models.functions import ExtractHour
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.db.models import Sum, Avg, Count, F, FloatField, ExpressionWrapper
-from django.utils.timezone import localdate, localtime
+from django.utils.timezone import localtime
 from .models import *
 
 from datetime import datetime, timedelta, time
@@ -120,6 +120,7 @@ def dashboard(request):
         "month_all_sales": month_all_sales,
         "month_profit": month_profit,
         "month_expenses": month_expenses,
+        "month_name": now.strftime("%B"),
     }
     return render(request, "dashboard.html", context)
 
@@ -146,3 +147,27 @@ def point_of_sale(request):
 
         
     return render(request, "pos.html", context)
+
+
+def products_list(request):
+    context = {
+        "products": Product.objects.all()
+    }
+    return render(request, "products.html", context)
+
+def product_add(request):
+    if request.method == "POST":
+        print(request.POST.get("barcode"))
+        name = request.POST.get("name")
+        barcode = request.POST.get("barcode")
+        sales_price = request.POST.get("price")
+        vendor_cost = request.POST.get("vendor_cost")
+        qty = request.POST.get("qty")
+        weight_based = request.POST.get("pricing_unit")
+        if weight_based == "kg":
+            unit = True
+        else:
+            unit = False
+        product = Product.objects.create(name=name, barcode=barcode, sales_price=sales_price, vendor_cost=vendor_cost, qty=qty, weight_based=unit)
+        return redirect("/products/")
+    return render(request, "product-add.html")

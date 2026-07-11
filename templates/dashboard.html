@@ -91,7 +91,7 @@
     <nav class="flex flex-col gap-1">
       <a href="{% url 'dashboard' %}" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Dashboard</a>
       <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Point of Sale</a>
-      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
+      <a href="{% url 'products' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
       <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Expenses</a>
     </nav>
 
@@ -208,7 +208,7 @@
           <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
             <div class="px-6 flex items-center justify-between mb-4">
               <p class="font-display text-sm font-semibold text-ink-900">Monthly</p>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5">30 days</span>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5">{{ month_name }}</span>
             </div>
             <div class="px-6">
               <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>

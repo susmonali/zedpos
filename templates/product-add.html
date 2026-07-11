@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karavan Market — Add Product</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:   { 900: '#0F211D', 800: '#16302A', 700: '#1E3B33', 600: '#2A4E44' },
+          paper: { 50: '#F6F5F0', 100: '#EFEEE7', 200: '#E4E2D8' },
+          brand: { 400: '#FDBB3D', 500: '#FCAB10', 600: '#E0960C', 700: '#A66E08' },
+          pine:  { 500: '#3E7C6A', 600: '#336657', 700: '#2A5548' },
+          rust:  { 500: '#C1483A', 600: '#A83B2F' },
+        },
+        fontFamily: {
+          display: ['"Space Grotesk"', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { -webkit-font-smoothing: antialiased; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D8D5C8; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #C7C3B2; }
+
+  .nav-item[data-active="true"] {
+    background-color: #16302A;
+    color: #FCAB10;
+  }
+
+  :focus-visible { outline: 2px solid #FCAB10; outline-offset: 2px; }
+
+  .field-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem;
+    background: #FFFFFF;
+    border: 1px solid #E4E2D8;
+    font-size: 0.875rem;
+    color: #0F211D;
+  }
+  .field-input:focus { outline: none; box-shadow: 0 0 0 2px #FCAB10; border-color: #FCAB10; }
+  .field-input::placeholder { color: rgba(15,33,29,0.35); }
+
+  .field-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(15,33,29,0.7);
+    margin-bottom: 0.375rem;
+  }
+
+  .unit-toggle[data-active="true"] {
+    background-color: #16302A;
+    color: #F6F5F0;
+    border-color: #16302A;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+
+<body class="font-body bg-paper-50 text-ink-900 h-screen overflow-hidden">
+
+<div class="flex h-screen">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="w-44 shrink-0 bg-ink-900 text-paper-100 flex flex-col py-6 px-3">
+    <div class="px-2 mb-8">
+      <p class="font-display font-semibold tracking-wide text-paper-50">KARAVAN</p>
+      <p class="text-[10px] tracking-widest text-paper-100/40 uppercase">Market</p>
+    </div>
+
+    <nav class="flex flex-col gap-1">
+      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
+      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Point of Sale</a>
+      <a href="{% url 'products' %}" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Products</a>
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Expenses</a>
+    </nav>
+
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="flex-1 min-w-0 flex flex-col">
+
+    <!-- Top bar -->
+    <header class="px-8 pt-6 pb-4 shrink-0">
+      <a href="{% url 'products' %}" class="text-sm text-ink-900/50 hover:text-ink-900 transition">← Products</a>
+      <h1 class="font-display text-2xl font-semibold text-ink-900 mt-1">Add product</h1>
+      <p class="text-sm text-ink-900/50 mt-0.5">Add a new item to the Karavan Market catalog</p>
+    </header>
+
+    <!-- Form -->
+    <div class="flex-1 overflow-y-auto px-8 pb-8">
+      <form method="POST" action="{% url 'product_add' %}" class="max-w-2xl"> {% csrf_token %}
+
+        <div class="bg-white border border-paper-200 rounded-2xl p-6 space-y-5">
+
+          <div>
+            <label class="field-label" for="name">Product name</label>
+            <input class="field-input" type="text" id="name" name="name" placeholder="e.g. Whole Milk 1L" required>
+          </div>
+
+          <div>
+            <div>
+              <label class="field-label" for="barcode">Barcode / PLU code</label>
+              <input class="field-input font-mono" type="text" id="barcode" name="barcode" placeholder="e.g. 2012222222226" required>
+            </div>
+
+          </div>
+
+          <div>
+            <label class="field-label">Priced by</label>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="true">
+                <input type="radio" name="pricing_unit" value="unit" class="hidden" checked>
+                Unit
+              </label>
+              <label class="unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+                <input type="radio" name="pricing_unit" value="kg" class="hidden">
+                Weight (kg)
+              </label>
+            </div>
+            <p class="text-xs text-ink-900/40 mt-1.5">Weight-priced items are entered at checkout by weighing or by dollar amount.</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="field-label" for="price">Price</label>
+              <div class="relative">
+                <input class="field-input pl-2 font-mono" type="number" min="0" step="0.01" id="price" name="price" placeholder="0.00" required>
+                <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-900/40 text-sm">UZS</span>
+                </div>
+            </div>
+            <div>
+              <label class="field-label" for="vendor_cost">Vendor Cost</label>
+              <div class="relative">
+                <input class="field-input pl-2 font-mono" type="number" min="0" step="0.01" id="vendor_cost" name="vendor_cost" placeholder="0.00" required>
+                <span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-900/40 text-sm">UZS</span>
+              </div>
+            </div>
+            
+          </div>
+
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+            <label class="field-label" for="stock">Stock on hand</label>
+            <input class="field-input font-mono max-w-[12rem]" type="number" min="0" step="0.01" id="stock" name="qty" placeholder="0">
+          </div>
+          <div>
+            <label class="field-label" for="reorder">Reorder threshold</label>
+            <input class="field-input font-mono max-w-[12rem]" type="number" min="0" step="0.01" id="reorder" name="reorder" placeholder="0">
+            <p class="text-xs text-ink-900/40 mt-1.5">You'll see a low-stock alert on the dashboard once stock falls below this amount.</p>
+          </div>
+          </div>
+
+        </div>
+
+        <div class="flex items-center gap-3 mt-6">
+          <button type="submit" class="px-5 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">Save product</button>
+          <a href="{% url 'products' %}" class="px-5 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-white transition">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Purely presentational toggle for the pricing-unit radio pair
+  document.querySelectorAll('.unit-toggle').forEach(label => {
+    label.addEventListener('click', () => {
+      document.querySelectorAll('.unit-toggle').forEach(l => l.dataset.active = 'false');
+      label.dataset.active = 'true';
+    });
+  });
+</script>
+
+</body>
+</html>
