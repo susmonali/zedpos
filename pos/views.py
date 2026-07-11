@@ -1,7 +1,7 @@
 from django.db.models.functions import ExtractHour
 from django.shortcuts import render
 from django.http import JsonResponse
-from django.db.models import Sum, Avg, Count
+from django.db.models import Sum, Avg, Count, F, FloatField, ExpressionWrapper
 from django.utils.timezone import localdate, localtime
 from .models import *
 
@@ -11,8 +11,9 @@ import json
 
 def dashboard(request):
     now = localtime().now()
+    today = now.date()
     today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    yesterday = now.date() - timedelta(days=1)
+    yesterday = today - timedelta(days=1)
     yesterday_midnight = today_midnight - timedelta(days=1)
     yesterday_current_time = now - timedelta(days=1)
 
@@ -75,6 +76,27 @@ def dashboard(request):
             "name": item["product__name"],
             "total": item["total_price"],
         })
+
+    #REPORTS
+    #yesterday
+    yesterday_all_sales = Sale.objects.filter(created_at__date=yesterday).aggregate(Sum("total"))["total__sum"] or 0
+    yesterday_profit = SaleItem.objects.filter(sale__created_at__date=yesterday).aggregate(Sum("profit"))["profit__sum"] or 0
+    yesterday_expenses = Expense.objects.filter(created_at__date=yesterday).aggregate(Sum("expense"))["expense__sum"] or 0
+
+    #7 days
+    days_7_before = today - timedelta(days=7)
+    days_7_all_sales = Sale.objects.filter(created_at__date__range=(days_7_before, today)).aggregate(Sum("total"))["total__sum"] or 0
+    days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(days_7_before, today)).aggregate(Sum("profit"))["profit__sum"] or 0
+    days_7_expenses = Expense.objects.filter(created_at__date__range=(days_7_before, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+
+    #this month
+    month = today.replace(day=1)
+    month_all_sales = Sale.objects.filter(created_at__date__range=(month, today)).aggregate(Sum("total"))["total__sum"] or 0
+    month_profit = SaleItem.objects.filter(sale__created_at__date__range=(month, today)).aggregate(Sum("profit"))["profit__sum"] or 0
+    month_expenses = Expense.objects.filter(created_at__date__range=(month, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+
+
+
     context = {
         "today_sales": today_sales,
         "yesterday_sales": yesterday_sales,
@@ -89,6 +111,15 @@ def dashboard(request):
         "items_sold_change": items_sold_change,
         "sales_by_hour": sales_by_hour,
         "top_sellers": top_sellers[:5],
+        "yesterday_all_sales": yesterday_all_sales,
+        "yesterday_profit": yesterday_profit,
+        "yesterday_expenses": yesterday_expenses,
+        "days_7_all_sales": days_7_all_sales,
+        "days_7_profit": days_7_profit,
+        "days_7_expenses": days_7_expenses,
+        "month_all_sales": month_all_sales,
+        "month_profit": month_profit,
+        "month_expenses": month_expenses,
     }
     return render(request, "dashboard.html", context)
 
@@ -107,7 +138,7 @@ def point_of_sale(request):
             if not qty:
                 qty = item.get('weight')
             price = item.get('price')
-            sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=qty)
+            sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=float(qty), profit=float(product.vendor_cost*qty))
             sale.total+=(qty*price)
         sale.save()
         return JsonResponse({"status": "ok", "sale_id":last_sale.id, "next_sale_id": last_sale.id+1, "sale_total":sale.total})
