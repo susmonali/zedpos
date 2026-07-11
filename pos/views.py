@@ -139,7 +139,10 @@ def point_of_sale(request):
             if not qty:
                 qty = item.get('weight')
             price = item.get('price')
+            
             sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=float(qty), profit=float(product.vendor_cost*qty))
+            product.qty-=qty
+            product.save()
             sale.total+=(qty*price)
         sale.save()
         return JsonResponse({"status": "ok", "sale_id":last_sale.id, "next_sale_id": last_sale.id+1, "sale_total":sale.total})
@@ -171,3 +174,19 @@ def product_add(request):
         product = Product.objects.create(name=name, barcode=barcode, sales_price=sales_price, vendor_cost=vendor_cost, qty=qty, weight_based=unit)
         return redirect("/products/")
     return render(request, "product-add.html")
+
+def product_detail(request, i):
+    today = localtime().now().date()
+    week = today - timedelta(days=7)
+    sold_this_week = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).aggregate(Sum("qty"))["qty__sum"] or 0
+    
+    sale_history = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).order_by("-sale__created_at")
+
+    days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(week, today)).aggregate(Sum("profit"))["profit__sum"] or 0
+    context = {
+        "product": Product.objects.get(id=i),
+        "sold_this_week": sold_this_week,
+        "sale_history": sale_history,
+        "days_7_profit": days_7_profit,
+    }
+    return render(request, "product-detail.html", context)

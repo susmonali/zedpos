@@ -114,8 +114,8 @@
           </thead>
           <tbody class="divide-y divide-paper-200">
             {% for product in products %}
-            <tr>
-              <td class="px-6 py-3.5"><a href="product-detail.html" class="font-medium text-ink-900 hover:text-brand-600">{{ product.name }}</a></td>
+            <tr onclick="window.location.href='{% url 'product_detail' product.id %}'" class="cursor-pointer">
+              <td class="px-6 py-3.5 font-medium text-ink-900 hover:text-brand-600">{{ product.name }}</td>
               <td class="px-6 py-3.5 font-mono text-ink-900/50">{{ product.barcode }}</td>
               <td class="px-6 py-3.5 font-mono text-left text-ink-900">{{ product.sales_price }} UZS</td>
               <td class="px-6 py-3.5 font-mono text-left text-ink-900">{{ product.qty }}</td>
