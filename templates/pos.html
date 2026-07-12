@@ -76,6 +76,8 @@
   #toast[data-show="false"] { transform: translateY(16px); opacity: 0; pointer-events: none; }
   #toast[data-show="true"]  { transform: translateY(0);    opacity: 1; }
 
+  #toast[data-variant="error"] { background-color: #A83B2F; }
+
   :focus-visible { outline: 2px solid #FCAB10; outline-offset: 2px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -398,9 +400,11 @@
   }
 
   let toastTimer;
-  function showToast(text) {
+  function showToast(text, variant) {
     const toast = document.getElementById('toast');
     document.getElementById('toastText').textContent = text;
+    if (variant) toast.dataset.variant = variant;
+    else delete toast.dataset.variant;
     toast.dataset.show = 'true';
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { toast.dataset.show = 'false'; }, 3200);
@@ -493,6 +497,14 @@
     return r.json();
   })
  .then(data => {
+    // Backend responds with {"message": "Not enough products!"} (no sale_total)
+    // when a cart line exceeds available stock — surface that instead of
+    // treating it as a successful sale.
+    if (data.message) {
+      showToast(data.message, 'error');
+      return;
+    }
+
     showToast('Sale completed - ' + fmt(data.sale_total));
 
     const barcodes = cart.map(c => c.barcode);
@@ -509,7 +521,7 @@
   })
   .catch(err => {
     console.error(err);
-    showToast('Failed to submit sale');
+    showToast('Failed to submit sale', 'error');
   });
   }
 

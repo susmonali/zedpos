@@ -127,7 +127,7 @@ def dashboard(request):
 def point_of_sale(request):
     last_sale = Sale.objects.last()
     context = {
-        "products": Product.objects.all(),
+        "products": Product.objects.filter(active=True),
         "current_sale_id": (last_sale.id + 1) if last_sale else 1
     }
     if request.method == "POST":
@@ -138,9 +138,10 @@ def point_of_sale(request):
             qty = item.get('qty')
             if not qty:
                 qty = item.get('weight')
+            if qty>product.qty:
+                return JsonResponse({"message": "Not enough products!"})
             price = item.get('price')
-            
-            sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=float(qty), profit=float(product.vendor_cost*qty))
+            sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=float(qty), profit=float((product.sales_price-product.vendor_cost)*qty))
             product.qty-=qty
             product.save()
             sale.total+=(qty*price)
@@ -154,7 +155,7 @@ def point_of_sale(request):
 
 def products_list(request):
     context = {
-        "products": Product.objects.all()
+        "products": Product.objects.all().order_by("-active")
     }
     return render(request, "products.html", context)
 
@@ -177,20 +178,47 @@ def product_add(request):
 
 def product_detail(request, i):
     today = localtime().now().date()
+    product = Product.objects.get(id=i)
     week = today - timedelta(days=7)
     sold_this_week = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).aggregate(Sum("qty"))["qty__sum"] or 0
     
     sale_history = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).order_by("-sale__created_at")[:50]
 
-    days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(week, today)).aggregate(Sum("profit"))["profit__sum"] or 0
+    days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product=product).aggregate(Sum("profit"))["profit__sum"] or 0
+    restock_history = Stock.objects.filter(created_at__date__range=(week, today), product=product)[:30]
     context = {
-        "product": Product.objects.get(id=i),
+        "product": product,
         "sold_this_week": sold_this_week,
         "sale_history": sale_history,
         "days_7_profit": days_7_profit,
+        "restock_history": restock_history, 
     }
     return render(request, "product-detail.html", context)
 
 def delete_product(request, i):
     Product.objects.get(id=i).delete
     return redirect("/products/")
+
+def archive_product(request, i):
+    product = Product.objects.get(id=i)
+    product.active = False
+    product.save()
+    return redirect("/products/")
+
+def unarchive_product(request, i):
+    product = Product.objects.get(id=i)
+    product.active = True
+    product.save()
+    return redirect(f"/products/{i}/detail/")
+
+def restock(request, i):
+    product = Product.objects.get(id=i)
+    now = localtime().now()
+    if request.method == "POST":
+        qty = request.POST.get("qty")
+        paid = request.POST.get("paid")
+        reference = request.POST.get("reference")
+        product.qty += float(qty)
+        product.save()
+        Stock.objects.create(product=product, qty=qty, created_at=now, paid=paid, reference=reference)
+    return redirect(f"/products/{i}/detail/")

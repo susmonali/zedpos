@@ -110,6 +110,8 @@
               <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Barcode / PLU</th>
               <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Price</th>
               <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold w-52">Stock</th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Status</th>
+
             </tr>
           </thead>
           <tbody class="divide-y divide-paper-200">
@@ -118,8 +120,12 @@
               <td class="px-6 py-3.5 font-medium text-ink-900 hover:text-brand-600">{{ product.name }}</td>
               <td class="px-6 py-3.5 font-mono text-ink-900/50">{{ product.barcode }}</td>
               <td class="px-6 py-3.5 font-mono text-left text-ink-900">{{ product.sales_price }} UZS</td>
-              <td class="px-6 py-3.5 font-mono text-left text-ink-900">{{ product.qty }}</td>
-
+              <td class="px-6 py-3.5 font-mono text-left text-ink-900">{% if product.weight_based %}{{ product.qty }} kg{% else %}{{ product.qty | floatformat }} items{% endif %}</td>
+              {% if product.active %}
+              <td class="px-6 py-3.5 font-mono text-left text-pine-600">Active</td>
+              {% else %}
+              <td class="px-6 py-3.5 font-mono text-left text-rust-600">Archived</td>
+              {% endif %}
             </tr>
             {% endfor %}
 
