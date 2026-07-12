@@ -180,7 +180,7 @@ def product_detail(request, i):
     week = today - timedelta(days=7)
     sold_this_week = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).aggregate(Sum("qty"))["qty__sum"] or 0
     
-    sale_history = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).order_by("-sale__created_at")
+    sale_history = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).order_by("-sale__created_at")[:50]
 
     days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(week, today)).aggregate(Sum("profit"))["profit__sum"] or 0
     context = {
@@ -190,3 +190,7 @@ def product_detail(request, i):
         "days_7_profit": days_7_profit,
     }
     return render(request, "product-detail.html", context)
+
+def delete_product(request, i):
+    Product.objects.get(id=i).delete
+    return redirect("/products/")

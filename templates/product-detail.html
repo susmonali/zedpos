@@ -91,8 +91,8 @@
         </div>
         <div class="flex items-center gap-2">
           <button type="button" onclick="openReceiveModal()" class="px-4 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">+ Receive stock</button>
-          <a href="#" class="px-4 py-2.5 rounded-xl border border-paper-200 bg-white text-sm font-medium text-ink-900/70 hover:bg-paper-50 transition">Edit</a>
-          <a href="#" class="px-4 py-2.5 rounded-xl border border-rust-500/30 text-sm font-medium text-rust-500 hover:bg-rust-500/5 transition">Delete</a>
+          <!-- <a href="#" class="px-4 py-2.5 rounded-xl border border-paper-200 bg-white text-sm font-medium text-ink-900/70 hover:bg-paper-50 transition">Edit</a> -->
+          <a href="{% url 'delete_product' product.id %}" class="px-4 py-2.5 rounded-xl border border-rust-500/30 text-sm font-medium text-rust-500 hover:bg-rust-500/5 transition">Delete</a>
         </div>
       </div>
     </header>
