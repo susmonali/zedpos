@@ -9,6 +9,16 @@ from datetime import datetime, timedelta, time
 
 import json
 
+def percent_change(new_value, old_value):
+    if old_value!=0:
+        percent_change = ((new_value-old_value)/old_value)*100
+    elif new_value>0:
+        percent_change = 100
+    else:
+        percent_change = 0
+    
+    return percent_change
+
 def dashboard(request):
     now = localtime().now()
     today = now.date()
@@ -22,34 +32,23 @@ def dashboard(request):
     today_sales = Sale.objects.filter(created_at__range=(today_midnight, now))
     yesterday_sales_total = yesterday_sales.aggregate(Sum("total"))["total__sum"] or 0
     today_sales_total = today_sales.aggregate(Sum("total"))["total__sum"] or 0
-    if yesterday_sales_total!=0:
-        percentage_change = ((today_sales_total-yesterday_sales_total)/yesterday_sales_total)*100
-    elif today_sales_total>0:
-        percentage_change = 100
-    else:
-        percentage_change=0
+
+    percentage_change = percent_change(new_value=today_sales_total, old_value=yesterday_sales_total)
+
     difference = today_sales.count()-yesterday_sales.count()
 
     average_basket = today_sales.aggregate(Avg("total"))["total__avg"] or 0
     average_basket_yesterday = yesterday_sales.aggregate(Avg("total"))["total__avg"] or 0
-    if average_basket_yesterday!=0:
-        avg_percent_change = ((average_basket-average_basket_yesterday
-                           )/average_basket_yesterday)*100
-    elif average_basket>0:
-        avg_percent_change = 100
-    else:
-        avg_percent_change=0
+    avg_percent_change = percent_change(new_value=average_basket, old_value=average_basket_yesterday)
+
 
     items_sold = SaleItem.objects.filter(sale__created_at__range=(today_midnight, now)
                                          ).aggregate(Sum("qty"))["qty__sum"] or 0
     items_sold_yesterday = SaleItem.objects.filter(sale__created_at__range=(yesterday_midnight, yesterday_current_time)
                                                    ).aggregate(Sum("qty"))["qty__sum"] or 0
-    if items_sold_yesterday!=0:
-        items_sold_change = ((items_sold-items_sold_yesterday)/items_sold_yesterday)*100
-    elif items_sold>0:
-        items_sold_change = 100
-    else:
-        items_sold_change=0
+    
+    items_sold_change = percent_change(new_value=items_sold, old_value=items_sold_yesterday)
+
 
     #sales by hour
     hour_totals = (today_sales.annotate(hour=ExtractHour('created_at'))
@@ -229,3 +228,26 @@ def restock(request, i):
         product.save()
         Stock.objects.create(product=product, qty=qty, created_at=now, paid=paid, reference=reference)
     return redirect(f"/products/{i}/detail/")
+
+
+def expenses(request):
+    now = localtime().now()
+    today = now.date()
+    yesterday = today - timedelta(days=1)
+    last_week = today - timedelta(days=7)
+    last_month = today.replace(day=1)
+
+    expenses = Expense.objects.all()
+    todays_expenses = expenses.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0
+    yesterdays_expenses = expenses.filter(created_at__date=yesterday).aggregate(Sum("expense"))["expense__sum"] or 0
+    weekly_expenses = expenses.filter(created_at__date__range=(last_week, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+    month_expenses = expenses.filter(created_at__date__range=(last_month, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+
+    context = {
+        "expenses": expenses,
+        "todays_expenses": todays_expenses,
+        "yesterdays_expenses": yesterdays_expenses,
+        "weekly_expenses": weekly_expenses,
+        "month_expenses": month_expenses,
+    }
+    return render(request, 'expenses.html', context)

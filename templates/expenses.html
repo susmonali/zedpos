@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karavan Market — Expenses</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink:   { 900: '#0F211D', 800: '#16302A', 700: '#1E3B33', 600: '#2A4E44' },
+          paper: { 50: '#F6F5F0', 100: '#EFEEE7', 200: '#E4E2D8' },
+          brand: { 400: '#FDBB3D', 500: '#FCAB10', 600: '#E0960C', 700: '#A66E08' },
+          pine:  { 500: '#3E7C6A', 600: '#336657', 700: '#2A5548' },
+          rust:  { 500: '#C1483A', 600: '#A83B2F' },
+        },
+        fontFamily: {
+          display: ['"Space Grotesk"', 'sans-serif'],
+          body: ['Inter', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { -webkit-font-smoothing: antialiased; }
+
+  .dash-divider { border-top: 2px dashed #DBD8CC; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #D8D5C8; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #C7C3B2; }
+
+  .nav-item[data-active="true"] {
+    background-color: #16302A;
+    color: #FCAB10;
+  }
+
+  :focus-visible { outline: 2px solid #FCAB10; outline-offset: 2px; }
+
+  tbody tr:hover { background-color: #F6F5F0; }
+
+  .field-input {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border-radius: 0.75rem;
+    background: #FFFFFF;
+    border: 1px solid #E4E2D8;
+    font-size: 0.875rem;
+    color: #0F211D;
+  }
+  .field-input:focus { outline: none; box-shadow: 0 0 0 2px #C1483A; border-color: #C1483A; }
+  .field-input::placeholder { color: rgba(15,33,29,0.35); }
+
+  .field-label {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: rgba(15,33,29,0.7);
+    margin-bottom: 0.375rem;
+  }
+
+  .reason-pill[data-active="true"] {
+    background-color: #16302A;
+    color: #F6F5F0;
+    border-color: #16302A;
+  }
+
+  #expenseModal[data-show="false"] { opacity: 0; pointer-events: none; }
+  #expenseModal[data-show="true"]  { opacity: 1; }
+
+  /* --- new bits --- */
+  .delta-up   { color: #C1483A; }
+  .delta-down { color: #336657; }
+
+  .budget-tick {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: #16302A;
+    border-radius: 1px;
+  }
+
+  .recurring-tag {
+    font-size: 10px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .recurring-tag.fixed    { background: #E9F0EC; color: #336657; }
+  .recurring-tag.variable { background: #FCEEE0; color: #A66E08; }
+
+  .spark-point { transition: r .15s ease; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+
+<body class="font-body bg-paper-50 text-ink-900 h-screen overflow-hidden">
+
+<div class="flex h-screen">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="w-44 shrink-0 bg-ink-900 text-paper-100 flex flex-col py-6 px-3">
+    <div class="px-2 mb-8">
+      <p class="font-display font-semibold tracking-wide text-paper-50">KARAVAN</p>
+      <p class="text-[10px] tracking-widest text-paper-100/40 uppercase">Market</p>
+    </div>
+
+    <nav class="flex flex-col gap-1">
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Point of Sale</a>
+      <a href="#" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
+      <a href="#" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Expenses</a>
+    </nav>
+
+    <div class="mt-auto px-2 pt-4 border-t border-paper-100/10">
+      <p class="text-sm font-medium text-paper-100">Jordan Mills</p>
+      <p class="text-[11px] text-paper-100/40">Store Manager</p>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="flex-1 min-w-0 flex flex-col">
+
+    <!-- Top bar -->
+    <header class="px-8 pt-6 pb-4 shrink-0">
+      <div class="flex items-start justify-between gap-6 flex-wrap">
+        <div>
+          <h1 class="font-display text-2xl font-semibold text-ink-900">Expenses</h1>
+          <p class="text-sm text-ink-900/50 mt-0.5">12,750,000 UZS spent this month</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-xl border border-paper-200 text-sm font-semibold text-ink-900/70 hover:bg-white transition">Export</button>
+          <button type="button" onclick="openAddExpenseModal()" class="px-4 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold transition">+ Add expense</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable content -->
+    <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6">
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Spending overview w/ MoM deltas -->
+        <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
+          <div class="px-6 py-3 border-b border-paper-200">
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Spending overview</p>
+          </div>
+          <div class="px-6 divide-y divide-paper-200">
+            <div class="flex items-center justify-between py-3.5">
+              <span class="text-sm text-ink-900/60">Today</span>
+              <span class="font-mono font-semibold text-rust-500">340,000 UZS</span>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <span class="text-sm text-ink-900/60">Yesterday</span>
+              <span class="font-mono font-semibold text-rust-500">210,000 UZS</span>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <span class="text-sm text-ink-900/60">This week</span>
+              <div class="flex items-baseline gap-2">
+                <span class="font-mono font-semibold text-rust-500">1,940,000 UZS</span>
+                <span class="text-xs font-mono font-semibold delta-down">▼ 6%</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <span class="text-sm text-ink-900/60">This month</span>
+              <div class="flex items-baseline gap-2">
+                <span class="font-mono font-semibold text-rust-500">12,750,000 UZS</span>
+                <span class="text-xs font-mono font-semibold delta-up">▲ 9%</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <span class="text-sm text-ink-900/60">vs. last month</span>
+              <span class="font-mono text-xs text-ink-900/40">11,690,000 UZS</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW: 14-day trend sparkline -->
+        <div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-1">
+            <p class="text-sm font-semibold text-ink-900">Daily spend, last 14 days</p>
+            <p class="text-xs font-mono text-ink-900/40">avg 455,000 UZS/day</p>
+          </div>
+          <svg viewBox="0 0 560 140" class="w-full h-36 mt-2" id="trendSvg">
+            <!-- gridlines -->
+            <line x1="0" y1="20"  x2="560" y2="20"  stroke="#E4E2D8" stroke-width="1"/>
+            <line x1="0" y1="70"  x2="560" y2="70"  stroke="#E4E2D8" stroke-width="1"/>
+            <line x1="0" y1="120" x2="560" y2="120" stroke="#E4E2D8" stroke-width="1"/>
+
+            <path d="M0,90 L40,95 L80,60 L120,100 L160,40 L200,85 L240,90 L280,20 L320,95 L360,70 L400,55 L440,100 L480,65 L520,10 L560,80"
+                  fill="none" stroke="#C1483A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M0,90 L40,95 L80,60 L120,100 L160,40 L200,85 L240,90 L280,20 L320,95 L360,70 L400,55 L440,100 L480,65 L520,10 L560,80 L560,140 L0,140 Z"
+                  fill="#C1483A" opacity="0.06"/>
+
+            <g fill="#C1483A">
+              <circle class="spark-point" cx="0"   cy="90"  r="3"/>
+              <circle class="spark-point" cx="40"  cy="95"  r="3"/>
+              <circle class="spark-point" cx="80"  cy="60"  r="3"/>
+              <circle class="spark-point" cx="120" cy="100" r="3"/>
+              <circle class="spark-point" cx="160" cy="40"  r="3"/>
+              <circle class="spark-point" cx="200" cy="85"  r="3"/>
+              <circle class="spark-point" cx="240" cy="90"  r="3"/>
+              <circle class="spark-point" cx="280" cy="20"  r="4" fill="#16302A"/>
+              <circle class="spark-point" cx="320" cy="95"  r="3"/>
+              <circle class="spark-point" cx="360" cy="70"  r="3"/>
+              <circle class="spark-point" cx="400" cy="55"  r="3"/>
+              <circle class="spark-point" cx="440" cy="100" r="3"/>
+              <circle class="spark-point" cx="480" cy="65"  r="3"/>
+              <circle class="spark-point" cx="520" cy="10"  r="4" fill="#16302A"/>
+              <circle class="spark-point" cx="560" cy="80"  r="3"/>
+            </g>
+          </svg>
+          <p class="text-[11px] text-ink-900/40 mt-1">Dark markers = restocking days (largest single outlays)</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Spending by category with budget ticks -->
+        <div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-semibold text-ink-900">Spending by category</p>
+            <p class="text-[11px] text-ink-900/40 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-sm bg-ink-900 inline-block"></span> budget ceiling
+            </p>
+          </div>
+          <div class="space-y-3">
+            <!-- each row: bar width = % of category total spent; tick = budget line -->
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Inventory / Restocking</span>
+              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
+                <div class="h-full rounded-full bg-rust-500" style="width:100%"></div>
+                <div class="budget-tick" style="left:85%"></div>
+              </div>
+              <span class="font-mono text-sm text-rust-500 w-32 text-right">6,000,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-rose-400"></span>Payroll</span>
+              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
+                <div class="h-full rounded-full bg-rust-500" style="width:47%"></div>
+                <div class="budget-tick" style="left:50%"></div>
+              </div>
+              <span class="font-mono text-sm text-rust-500 w-32 text-right">2,800,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Rent</span>
+              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
+                <div class="h-full rounded-full bg-rust-500" style="width:25%"></div>
+                <div class="budget-tick" style="left:25%"></div>
+              </div>
+              <span class="font-mono text-sm text-rust-500 w-32 text-right">1,500,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-yellow-400"></span>Utilities</span>
+              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
+                <div class="h-full rounded-full bg-rust-500" style="width:13%"></div>
+                <div class="budget-tick" style="left:10%"></div>
+              </div>
+              <span class="font-mono text-sm text-rust-500 w-32 text-right">780,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-orange-400"></span>Maintenance & Repairs</span>
+              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
+                <div class="h-full rounded-full bg-rust-500" style="width:9%"></div>
+                <div class="budget-tick" style="left:15%"></div>
+              </div>
+              <span class="font-mono text-sm text-rust-500 w-32 text-right">540,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Supplies</span>
+              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
+                <div class="h-full rounded-full bg-rust-500" style="width:7%"></div>
+                <div class="budget-tick" style="left:8%"></div>
+              </div>
+              <span class="font-mono text-sm text-rust-500 w-32 text-right">430,000 UZS</span>
+            </div>
+          </div>
+          <p class="text-[11px] text-ink-900/40 mt-4">Repairs is the only line past its monthly ceiling this month.</p>
+        </div>
+
+        <!-- NEW: Top vendors -->
+        <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
+          <div class="px-6 py-3 border-b border-paper-200">
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Top vendors this month</p>
+          </div>
+          <div class="px-6 divide-y divide-paper-200">
+            <div class="flex items-center justify-between py-3.5">
+              <div>
+                <p class="text-sm text-ink-900">Silk Road Wholesale</p>
+                <p class="text-[11px] text-ink-900/40">4 payments</p>
+              </div>
+              <span class="font-mono font-semibold text-sm text-rust-500">4,200,000</span>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <div>
+                <p class="text-sm text-ink-900">Payroll — staff</p>
+                <p class="text-[11px] text-ink-900/40">6 payments</p>
+              </div>
+              <span class="font-mono font-semibold text-sm text-rust-500">2,800,000</span>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <div>
+                <p class="text-sm text-ink-900">Tashkent Property Co.</p>
+                <p class="text-[11px] text-ink-900/40">1 payment</p>
+              </div>
+              <span class="font-mono font-semibold text-sm text-rust-500">1,500,000</span>
+            </div>
+            <div class="flex items-center justify-between py-3.5">
+              <div>
+                <p class="text-sm text-ink-900">Namangan Fresh Produce</p>
+                <p class="text-[11px] text-ink-900/40">3 payments</p>
+              </div>
+              <span class="font-mono font-semibold text-sm text-rust-500">1,180,000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent expenses w/ recurring tags -->
+      <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
+        <div class="px-6 py-3 border-b border-paper-200 flex items-center justify-between">
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Recent expenses</p>
+          <p class="text-[11px] text-ink-900/40 flex items-center gap-3">
+            <span class="flex items-center gap-1"><span class="recurring-tag fixed">Fixed</span> repeats monthly</span>
+            <span class="flex items-center gap-1"><span class="recurring-tag variable">Variable</span> one-off</span>
+          </p>
+        </div>
+        <table id="recentExpensesTable" class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-paper-200">
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Date</th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Reason</th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Type</th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Note</th>
+              <th class="text-right px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-paper-200">
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 14</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Inventory / Restocking</span></td>
+              <td class="px-6 py-3.5"><span class="recurring-tag variable">Variable</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Weekly produce order</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">340,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 13</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-orange-400"></span>Maintenance & Repairs</span></td>
+              <td class="px-6 py-3.5"><span class="recurring-tag variable">Variable</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Fridge compressor fix</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">210,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 1</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Rent</span></td>
+              <td class="px-6 py-3.5"><span class="recurring-tag fixed">Fixed</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">July rent</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">1,500,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 1</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-teal-400"></span>Insurance</span></td>
+              <td class="px-6 py-3.5"><span class="recurring-tag fixed">Fixed</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Storefront policy</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">310,000 UZS</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add expense modal (unchanged, kept as-is) -->
+<div id="expenseModal" data-show="false" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200">
+  <div onclick="closeAddExpenseModal()" class="absolute inset-0 bg-ink-900/40"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+    <p class="font-display font-semibold text-ink-900 text-lg">Add expense</p>
+    <p class="text-xs text-ink-900/50 mt-0.5">Record money leaving the business</p>
+
+    <label class="block mt-5">
+      <span class="field-label">Total amount</span>
+      <div class="relative">
+        <input id="emAmount" class="w-full pl-4 pr-16 py-3.5 rounded-xl bg-paper-50 border border-paper-200 font-mono text-2xl font-bold text-rust-500 focus:outline-none focus:ring-2 focus:ring-rust-500 focus:border-rust-500"
+          type="number" min="0" step="0.01" placeholder="0">
+        <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-mono text-ink-900/40">UZS</span>
+      </div>
+    </label>
+
+    <div class="mt-4">
+      <span class="field-label">Reason</span>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="true">
+          <input type="radio" name="em-reason" value="Inventory / Restocking" data-dot="bg-amber-400" class="hidden" checked>
+          <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>Inventory / Restocking
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Payroll" data-dot="bg-rose-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>Payroll
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Rent" data-dot="bg-indigo-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>Rent
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Utilities" data-dot="bg-yellow-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span>Utilities
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Maintenance & Repairs" data-dot="bg-orange-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>Maintenance & Repairs
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Supplies" data-dot="bg-slate-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>Supplies
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Insurance" data-dot="bg-teal-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-teal-400 shrink-0"></span>Insurance
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Transport & Delivery" data-dot="bg-lime-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-lime-400 shrink-0"></span>Transport & Delivery
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Marketing" data-dot="bg-fuchsia-400" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-fuchsia-400 shrink-0"></span>Marketing
+        </label>
+        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
+          <input type="radio" name="em-reason" value="Other" data-dot="bg-ink-900/30" class="hidden">
+          <span class="w-2 h-2 rounded-full bg-ink-900/30 shrink-0"></span>Other
+        </label>
+      </div>
+    </div>
+
+    <!-- NEW: recurring toggle -->
+    <div class="mt-4">
+      <span class="field-label">Type</span>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="reason-pill flex items-center justify-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false" id="typeVariableLabel">
+          <input type="radio" name="em-type" value="Variable" class="hidden" checked>
+          One-off
+        </label>
+        <label class="reason-pill flex items-center justify-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false" id="typeFixedLabel">
+          <input type="radio" name="em-type" value="Fixed" class="hidden">
+          Repeats monthly
+        </label>
+      </div>
+    </div>
+
+    <!-- NEW: vendor field -->
+    <label class="block mt-4">
+      <span class="field-label">Vendor / payee <span class="text-ink-900/30 font-normal">(optional)</span></span>
+      <input id="emVendor" class="field-input" type="text" placeholder="e.g. Silk Road Wholesale">
+    </label>
+
+    <label class="block mt-4">
+      <span class="field-label">Date</span>
+      <input id="emDate" class="field-input font-mono" type="date">
+    </label>
+
+    <label class="block mt-4">
+      <span class="field-label">Note</span>
+      <textarea id="emNote" class="field-input" rows="2" placeholder="What was this for?"></textarea>
+    </label>
+
+    <div class="flex gap-3 mt-6">
+      <button type="button" onclick="closeAddExpenseModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
+      <button type="button" onclick="saveExpense()" class="flex-1 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold transition">Save expense</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openAddExpenseModal() {
+    document.getElementById('emAmount').value = '';
+    document.getElementById('emNote').value = '';
+    document.getElementById('emVendor').value = '';
+    document.getElementById('emDate').valueAsDate = new Date();
+    document.querySelectorAll('#expenseModal .reason-pill').forEach((l) => {
+      const isReason = l.querySelector('input[name="em-reason"]');
+      if (isReason) l.dataset.active = isReason.value === 'Inventory / Restocking';
+    });
+    document.querySelector('input[name="em-reason"]').checked = true;
+    document.getElementById('typeVariableLabel').dataset.active = true;
+    document.getElementById('typeFixedLabel').dataset.active = false;
+    document.querySelector('input[name="em-type"][value="Variable"]').checked = true;
+
+    const modal = document.getElementById('expenseModal');
+    modal.dataset.show = 'true';
+    document.getElementById('emAmount').focus();
+  }
+
+  function closeAddExpenseModal() {
+    document.getElementById('expenseModal').dataset.show = 'false';
+  }
+
+  document.querySelectorAll('#expenseModal .reason-pill').forEach(label => {
+    label.addEventListener('click', () => {
+      const input = label.querySelector('input');
+      const group = input.name;
+      document.querySelectorAll(`input[name="${group}"]`).forEach(i => {
+        i.closest('.reason-pill').dataset.active = 'false';
+      });
+      label.dataset.active = 'true';
+      input.checked = true;
+    });
+  });
+
+  function saveExpense() {
+    const amount = parseFloat(document.getElementById('emAmount').value);
+    if (isNaN(amount) || amount <= 0) {
+      document.getElementById('emAmount').focus();
+      return;
+    }
+
+    const reasonInput = document.querySelector('input[name="em-reason"]:checked');
+    const reasonLabel = reasonInput.value;
+    const dotClass = reasonInput.dataset.dot;
+    const typeInput = document.querySelector('input[name="em-type"]:checked').value;
+    const typeClass = typeInput === 'Fixed' ? 'fixed' : 'variable';
+    const typeText = typeInput === 'Fixed' ? 'Fixed' : 'Variable';
+    const note = document.getElementById('emNote').value.trim();
+    const dateVal = document.getElementById('emDate').value;
+
+    const dateLabel = dateVal
+      ? new Date(dateVal + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric' })
+      : 'Today';
+
+    const amountLabel = amount.toLocaleString('en-US') + ' UZS';
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="px-6 py-3.5 font-mono text-ink-900/50">${dateLabel}</td>
+      <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full ${dotClass}"></span>${reasonLabel}</span></td>
+      <td class="px-6 py-3.5"><span class="recurring-tag ${typeClass}">${typeText}</span></td>
+      <td class="px-6 py-3.5 text-ink-900/60">${note ? note : '—'}</td>
+      <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">${amountLabel}</td>
+    `;
+
+    const tbody = document.querySelector('#recentExpensesTable tbody');
+    tbody.insertBefore(row, tbody.firstChild);
+
+    closeAddExpenseModal();
+  }
+</script>
+
+</body>
+</html>
