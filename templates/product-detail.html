@@ -100,7 +100,18 @@
 
     <!-- Content -->
     <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6">
-
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <div class="bg-white border border-paper-200 rounded-2xl p-6">
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Pricing</p>
+          <p class="font-mono text-3xl font-bold text-ink-900">{{ product.sales_price }} UZS</p>
+          <p class="text-sm text-ink-900/50 mt-1">Priced per {% if product.weight_based %} kg{% else %} unit{% endif %}</p>
+        </div>
+        <div class="bg-white border border-paper-200 rounded-2xl p-6">
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Vendor Cost</p>
+          <p class="font-mono text-3xl font-bold text-ink-900">{{ product.vendor_cost }} UZS</p>
+          <p class="text-sm text-ink-900/50 mt-1">Priced per {% if product.weight_based %} kg{% else %} unit{% endif %}</p>
+        </div>
+        </div>
       <!-- Key info + stock -->
       <!-- <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -123,8 +134,8 @@
             <div id="stockGaugeBar" class="h-full bg-rust-500" style="width:15%"></div>
           </div>
           <p id="stockNote" class="text-xs text-rust-500 mt-2 font-medium">Below reorder point — restock recommended</p>
-        </div>
-      </div> -->
+        </div>-->
+
 
       <!-- Sales performance -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -279,7 +290,7 @@
       <a href="{% url 'archive_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold transition text-center">Archive</a>
     </div>
     {% else %}
-    <p class="font-display font-semibold text-ink-900 mt-4">Archive this product?</p>
+    <p class="font-display font-semibold text-ink-900 mt-4">Unarchive this product?</p>
     <div class="flex gap-3 mt-6">
       <button type="button" onclick="closeArchiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
       <a href="{% url 'unarchive_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold transition text-center">Unarchive</a>

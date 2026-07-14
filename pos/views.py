@@ -139,16 +139,23 @@ def point_of_sale(request):
             if not qty:
                 qty = item.get('weight')
             if qty>product.qty:
-                return JsonResponse({"message": "Not enough products!"})
+                return JsonResponse({"message": f"Not enough products! - { product.name }"})
             price = item.get('price')
             sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=float(qty), profit=float((product.sales_price-product.vendor_cost)*qty))
             product.qty-=qty
             product.save()
             sale.total+=(qty*price)
         sale.save()
-        return JsonResponse({"status": "ok", "sale_id":last_sale.id, "next_sale_id": last_sale.id+1, "sale_total":sale.total})
-
-
+        return JsonResponse({
+            "status": "ok",
+            "sale_id": last_sale.id,
+            "next_sale_id": last_sale.id + 1,
+            "sale_total": sale.total,
+            "updated_stock": {
+                str(item.product.id): item.product.qty
+                for item in SaleItem.objects.filter(sale=sale)
+            }
+        })
         
     return render(request, "pos.html", context)
 

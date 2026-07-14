@@ -55,6 +55,17 @@
 
   tbody tr:hover { background-color: #F6F5F0; }
 
+  .sort-btn { display: inline-flex; align-items: center; gap: 0.25rem; cursor: pointer; user-select: none; }
+  .sort-btn:hover { color: #0F211D; }
+  .sort-arrow { font-size: 0.6rem; opacity: 0.25; }
+  .sort-btn[data-active="true"] .sort-arrow { opacity: 1; color: #FCAB10; }
+
+  .page-btn[data-active="true"] {
+    background-color: #16302A;
+    color: #F6F5F0;
+    border-color: #16302A;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
@@ -95,8 +106,9 @@
       </div>
 
       <div class="mt-5 flex items-center gap-3 flex-wrap">
-        <input type="text" placeholder="Search by name or barcode…"
+        <input id="searchInput" type="text" placeholder="Search by name or barcode…"
           class="w-full max-w-xs px-4 py-2.5 rounded-xl bg-white border border-paper-200 text-sm placeholder:text-ink-900/35 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+        <p id="resultsSummary" class="text-xs text-ink-900/40 font-mono"></p>
       </div>
     </header>
 
@@ -106,21 +118,35 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-paper-200">
-              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Product</th>
-              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Barcode / PLU</th>
-              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Price</th>
-              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold w-52">Stock</th>
-              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Status</th>
-
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                <span class="sort-btn" data-sort-key="name" onclick="setSort('name')">Product <span class="sort-arrow">▲</span></span>
+              </th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                <span class="sort-btn" data-sort-key="barcode" onclick="setSort('barcode')">Barcode / PLU <span class="sort-arrow">▲</span></span>
+              </th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                <span class="sort-btn" data-sort-key="price" onclick="setSort('price')">Price <span class="sort-arrow">▲</span></span>
+              </th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold w-52">
+                <span class="sort-btn" data-sort-key="qty" onclick="setSort('qty')">Stock <span class="sort-arrow">▲</span></span>
+              </th>
+              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                <span class="sort-btn" data-sort-key="status" onclick="setSort('status')">Status <span class="sort-arrow">▲</span></span>
+              </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-paper-200">
+          <tbody id="productsBody" class="divide-y divide-paper-200">
             {% for product in products %}
-            <tr onclick="window.location.href='{% url 'product_detail' product.id %}'" class="cursor-pointer">
+            <tr onclick="window.location.href='{% url 'product_detail' product.id %}'" class="product-row cursor-pointer"
+                data-name="{{ product.name }}"
+                data-barcode="{{ product.barcode }}"
+                data-price="{{ product.sales_price }}"
+                data-qty="{{ product.qty }}"
+                data-status="{% if product.active %}Active{% else %}Archived{% endif %}">
               <td class="px-6 py-3.5 font-medium text-ink-900 hover:text-brand-600">{{ product.name }}</td>
               <td class="px-6 py-3.5 font-mono text-ink-900/50">{{ product.barcode }}</td>
               <td class="px-6 py-3.5 font-mono text-left text-ink-900">{{ product.sales_price }} UZS</td>
-              <td class="px-6 py-3.5 font-mono text-left text-ink-900">{% if product.weight_based %}{{ product.qty }} kg{% else %}{{ product.qty | floatformat }} items{% endif %}</td>
+              <td class="px-6 py-3.5 font-mono text-left {% if product.qty == 0 %}text-rust-600{% else %}text-ink-900{% endif %}">{% if product.weight_based %}{{ product.qty }} kg{% else %}{{ product.qty | floatformat }} items{% endif %}</td>
               {% if product.active %}
               <td class="px-6 py-3.5 font-mono text-left text-pine-600">Active</td>
               {% else %}
@@ -129,12 +155,172 @@
             </tr>
             {% endfor %}
 
+            <tr id="noResultsRow" class="hidden">
+              <td colspan="5" class="px-6 py-10 text-center text-sm text-ink-900/40">No products match your search.</td>
+            </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Pagination -->
+      <div id="paginationBar" class="flex items-center justify-between mt-4 flex-wrap gap-3">
+        <div class="flex items-center gap-2 text-xs text-ink-900/40">
+          <span>Rows per page</span>
+          <select id="pageSizeSelect" class="font-mono text-xs bg-white border border-paper-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div id="pageButtons" class="flex items-center gap-1"></div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+  const tbody = document.getElementById('productsBody');
+  const noResultsRow = document.getElementById('noResultsRow');
+  const searchInput = document.getElementById('searchInput');
+  const resultsSummary = document.getElementById('resultsSummary');
+  const pageSizeSelect = document.getElementById('pageSizeSelect');
+  const pageButtons = document.getElementById('pageButtons');
+
+  const allRows = Array.from(tbody.querySelectorAll('.product-row'));
+
+  const columnType = {
+    name: 'string',
+    barcode: 'string',
+    price: 'number',
+    qty: 'number',
+    status: 'string',
+  };
+
+  let sortKey = 'name';
+  let sortDir = 1; // 1 = ascending, -1 = descending
+  let searchTerm = '';
+  let currentPage = 1;
+  let pageSize = 10;
+
+  function setSort(key) {
+    if (sortKey === key) {
+      sortDir *= -1;
+    } else {
+      sortKey = key;
+      sortDir = 1;
+    }
+    currentPage = 1;
+    render();
+  }
+
+  function compareRows(a, b) {
+    const type = columnType[sortKey];
+    let av = a.dataset[sortKey];
+    let bv = b.dataset[sortKey];
+
+    if (type === 'number') {
+      av = parseFloat(av) || 0;
+      bv = parseFloat(bv) || 0;
+      return (av - bv) * sortDir;
+    }
+
+    av = (av || '').toLowerCase();
+    bv = (bv || '').toLowerCase();
+    if (av < bv) return -1 * sortDir;
+    if (av > bv) return 1 * sortDir;
+    return 0;
+  }
+
+  function matchesSearch(row) {
+    if (!searchTerm) return true;
+    const name = row.dataset.name.toLowerCase();
+    const barcode = row.dataset.barcode.toLowerCase();
+    return name.includes(searchTerm) || barcode.includes(searchTerm);
+  }
+
+  function render() {
+    // Sort all rows and reorder them in the DOM
+    const sorted = [...allRows].sort(compareRows);
+    sorted.forEach(row => tbody.insertBefore(row, noResultsRow));
+
+    // Update sort header indicators
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      const active = btn.dataset.sortKey === sortKey;
+      btn.dataset.active = active;
+      btn.querySelector('.sort-arrow').textContent = (active && sortDir === -1) ? '▼' : '▲';
+    });
+
+    // Filter
+    const filtered = sorted.filter(matchesSearch);
+    noResultsRow.classList.toggle('hidden', filtered.length !== 0);
+
+    // Clamp page
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+
+    allRows.forEach(row => { row.classList.add('hidden'); });
+    filtered.forEach((row, i) => {
+      row.classList.toggle('hidden', !(i >= start && i < end));
+    });
+
+    // Results summary
+    if (filtered.length === 0) {
+      resultsSummary.textContent = '0 results';
+    } else {
+      resultsSummary.textContent = `${start + 1}–${Math.min(end, filtered.length)} of ${filtered.length}`;
+    }
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    pageButtons.innerHTML = '';
+
+    const makeBtn = (label, page, opts = {}) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.className = 'page-btn text-xs font-mono px-2.5 py-1.5 rounded-lg border border-paper-200 bg-white text-ink-900/60 hover:border-ink-900/30 transition disabled:opacity-30 disabled:pointer-events-none';
+      btn.disabled = !!opts.disabled;
+      if (opts.active) btn.dataset.active = 'true';
+      btn.onclick = () => { currentPage = page; render(); };
+      return btn;
+    };
+
+    pageButtons.appendChild(makeBtn('‹ Prev', currentPage - 1, { disabled: currentPage === 1 }));
+
+    for (let p = 1; p <= totalPages; p++) {
+      // Keep the page list compact: always show first, last, current, and neighbors
+      if (p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1) {
+        pageButtons.appendChild(makeBtn(String(p), p, { active: p === currentPage }));
+      } else if (Math.abs(p - currentPage) === 2) {
+        const span = document.createElement('span');
+        span.textContent = '…';
+        span.className = 'text-xs text-ink-900/30 px-1';
+        pageButtons.appendChild(span);
+      }
+    }
+
+    pageButtons.appendChild(makeBtn('Next ›', currentPage + 1, { disabled: currentPage === totalPages }));
+  }
+
+  searchInput.addEventListener('input', e => {
+    searchTerm = e.target.value.trim().toLowerCase();
+    currentPage = 1;
+    render();
+  });
+
+  pageSizeSelect.addEventListener('change', e => {
+    pageSize = parseInt(e.target.value, 10);
+    currentPage = 1;
+    render();
+  });
+
+  render();
+</script>
 
 </body>
 </html>

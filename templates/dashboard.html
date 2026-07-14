@@ -154,7 +154,7 @@
           <!-- Period reports: Yesterday / 7 Days / Monthly, ticket-style panels -->
       <div>
         <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-3 px-1">Reports</p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
           <!-- Yesterday -->
           <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
@@ -204,11 +204,19 @@
             </div>
           </div>
 
-          <!-- Monthly -->
+          <!-- Monthly, now with prev/next month navigation -->
           <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
             <div class="px-6 flex items-center justify-between mb-4">
               <p class="font-display text-sm font-semibold text-ink-900">Monthly</p>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5">{{ month_name }}</span>
+              <div class="flex items-center gap-1">
+                <a href="{% url 'dashboard' %}?month={{ prev_month_param }}"
+                   class="w-5 h-5 rounded-full flex items-center justify-center text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 transition"
+                   aria-label="Previous month">‹</a>
+                <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5">{{ month_name }}</span>
+                <a href="{% url 'dashboard' %}?month={{ next_month_param }}"
+                   class="w-5 h-5 rounded-full flex items-center justify-center text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 transition"
+                   aria-label="Next month">›</a>
+              </div>
             </div>
             <div class="px-6">
               <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
@@ -227,6 +235,51 @@
               </div>
               
             </div>
+          </div>
+
+          <!-- Custom Range -->
+          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
+            <div class="px-6 flex items-center justify-between mb-4">
+              <p class="font-display text-sm font-semibold text-ink-900">Custom Range</p>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Pick dates</span>
+            </div>
+
+            <form method="GET" action="{% url 'dashboard' %}" class="px-6 flex items-end gap-2 mb-4">
+              <label class="flex-1 min-w-0">
+                <span class="block text-[10px] uppercase tracking-widest text-ink-900/40 font-semibold mb-1">From</span>
+                <input type="date" name="start_date" value="{{ start_date|default:'' }}"
+                  class="w-full text-xs font-mono px-2 py-1.5 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+              </label>
+              <label class="flex-1 min-w-0">
+                <span class="block text-[10px] uppercase tracking-widest text-ink-900/40 font-semibold mb-1">To</span>
+                <input type="date" name="end_date" value="{{ end_date|default:'' }}"
+                  class="w-full text-xs font-mono px-2 py-1.5 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
+              </label>
+              <button type="submit"
+                class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Apply</button>
+            </form>
+
+            {% if custom_range_active %}
+            <div class="px-6">
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
+              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ custom_all_sales }} UZS</p>
+            </div>
+            <div class="dash-divider my-4 mx-6"></div>
+            <div class="px-6 grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
+                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ custom_profit }} UZS</p>
+              </div>
+              <div>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
+                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ custom_expenses }} UZS</p>
+              </div>
+            </div>
+            {% else %}
+            <div class="px-6">
+              <p class="text-xs text-ink-900/35">Select a date range and press Apply to see totals.</p>
+            </div>
+            {% endif %}
           </div>
 
         </div>
