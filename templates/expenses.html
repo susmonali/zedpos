@@ -59,6 +59,7 @@
     border: 1px solid #E4E2D8;
     font-size: 0.875rem;
     color: #0F211D;
+    transition: all 0.2s;
   }
   .field-input:focus { outline: none; box-shadow: 0 0 0 2px #C1483A; border-color: #C1483A; }
   .field-input::placeholder { color: rgba(15,33,29,0.35); }
@@ -79,32 +80,6 @@
 
   #expenseModal[data-show="false"] { opacity: 0; pointer-events: none; }
   #expenseModal[data-show="true"]  { opacity: 1; }
-
-  /* --- new bits --- */
-  .delta-up   { color: #C1483A; }
-  .delta-down { color: #336657; }
-
-  .budget-tick {
-    position: absolute;
-    top: -3px;
-    bottom: -3px;
-    width: 2px;
-    background: #16302A;
-    border-radius: 1px;
-  }
-
-  .recurring-tag {
-    font-size: 10px;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    font-weight: 600;
-    padding: 2px 7px;
-    border-radius: 999px;
-  }
-  .recurring-tag.fixed    { background: #E9F0EC; color: #336657; }
-  .recurring-tag.variable { background: #FCEEE0; color: #A66E08; }
-
-  .spark-point { transition: r .15s ease; }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
@@ -144,11 +119,28 @@
       <div class="flex items-start justify-between gap-6 flex-wrap">
         <div>
           <h1 class="font-display text-2xl font-semibold text-ink-900">Expenses</h1>
-          <p class="text-sm text-ink-900/50 mt-0.5">12,750,000 UZS spent this month</p>
+          <p class="text-sm text-ink-900/50 mt-0.5">Track and manage business outflows</p>
         </div>
-        <div class="flex items-center gap-2">
-          <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-xl border border-paper-200 text-sm font-semibold text-ink-900/70 hover:bg-white transition">Export</button>
-          <button type="button" onclick="openAddExpenseModal()" class="px-4 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold transition">+ Add expense</button>
+        
+        <!-- Action Buttons & Month Dropdown -->
+        <div class="flex items-center gap-3">
+          <select class="px-4 py-2.5 rounded-xl bg-white border border-paper-200 text-sm font-semibold text-ink-900 focus:outline-none focus:ring-2 focus:ring-rust-500 cursor-pointer shadow-sm hover:bg-paper-50 transition">
+            <option>August 2026</option>
+            <option>July 2026</option>
+            <option>June 2026</option>
+            <option>May 2026</option>
+            <option>All of 2026</option>
+          </select>
+          
+          <button type="button" class="px-4 py-2.5 rounded-xl bg-white border border-paper-200 hover:bg-paper-50 text-ink-900 text-sm font-semibold transition shadow-sm flex items-center gap-2">
+            <svg class="w-4 h-4 text-ink-900/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Export
+          </button>
+
+          <button type="button" onclick="openAddExpenseModal()" class="px-4 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold shadow-sm transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Add expense
+          </button>
         </div>
       </div>
     </header>
@@ -156,261 +148,240 @@
     <!-- Scrollable content -->
     <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6">
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Stats Grid (Expanded to 4 columns to fit new components) -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
 
-        <!-- Spending overview w/ MoM deltas -->
-        <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
-          <div class="px-6 py-3 border-b border-paper-200">
+        <!-- 1. Spending overview -->
+        <div class="lg:col-span-1 bg-white border border-paper-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+          <div class="px-5 py-3 border-b border-paper-200">
             <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Spending overview</p>
           </div>
-          <div class="px-6 divide-y divide-paper-200">
-            <div class="flex items-center justify-between py-3.5">
+          <div class="px-5 divide-y divide-paper-200 flex-1 flex flex-col justify-center">
+            <div class="flex flex-wrap items-center justify-between py-3.5 gap-2">
               <span class="text-sm text-ink-900/60">Today</span>
-              <span class="font-mono font-semibold text-rust-500">340,000 UZS</span>
-            </div>
-            <div class="flex items-center justify-between py-3.5">
-              <span class="text-sm text-ink-900/60">Yesterday</span>
               <span class="font-mono font-semibold text-rust-500">210,000 UZS</span>
             </div>
-            <div class="flex items-center justify-between py-3.5">
+            <div class="flex flex-wrap items-center justify-between py-3.5 gap-2">
               <span class="text-sm text-ink-900/60">This week</span>
               <div class="flex items-baseline gap-2">
-                <span class="font-mono font-semibold text-rust-500">1,940,000 UZS</span>
-                <span class="text-xs font-mono font-semibold delta-down">▼ 6%</span>
+                <span class="font-mono font-semibold text-rust-500">3,120,000 UZS</span>
+                <span class="text-xs font-mono text-pine-600">▼ 4.2%</span>
               </div>
             </div>
-            <div class="flex items-center justify-between py-3.5">
+            <div class="flex flex-wrap items-center justify-between py-3.5 gap-2">
               <span class="text-sm text-ink-900/60">This month</span>
               <div class="flex items-baseline gap-2">
-                <span class="font-mono font-semibold text-rust-500">12,750,000 UZS</span>
-                <span class="text-xs font-mono font-semibold delta-up">▲ 9%</span>
+                <span class="font-mono font-semibold text-rust-500 text-lg">12,750,000</span>
+                <span class="text-xs font-mono text-rust-500">▲ 6.8%</span>
               </div>
-            </div>
-            <div class="flex items-center justify-between py-3.5">
-              <span class="text-sm text-ink-900/60">vs. last month</span>
-              <span class="font-mono text-xs text-ink-900/40">11,690,000 UZS</span>
             </div>
           </div>
         </div>
 
-        <!-- NEW: 14-day trend sparkline -->
-        <div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6">
-          <div class="flex items-center justify-between mb-1">
-            <p class="text-sm font-semibold text-ink-900">Daily spend, last 14 days</p>
-            <p class="text-xs font-mono text-ink-900/40">avg 455,000 UZS/day</p>
-          </div>
-          <svg viewBox="0 0 560 140" class="w-full h-36 mt-2" id="trendSvg">
-            <!-- gridlines -->
-            <line x1="0" y1="20"  x2="560" y2="20"  stroke="#E4E2D8" stroke-width="1"/>
-            <line x1="0" y1="70"  x2="560" y2="70"  stroke="#E4E2D8" stroke-width="1"/>
-            <line x1="0" y1="120" x2="560" y2="120" stroke="#E4E2D8" stroke-width="1"/>
-
-            <path d="M0,90 L40,95 L80,60 L120,100 L160,40 L200,85 L240,90 L280,20 L320,95 L360,70 L400,55 L440,100 L480,65 L520,10 L560,80"
-                  fill="none" stroke="#C1483A" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
-            <path d="M0,90 L40,95 L80,60 L120,100 L160,40 L200,85 L240,90 L280,20 L320,95 L360,70 L400,55 L440,100 L480,65 L520,10 L560,80 L560,140 L0,140 Z"
-                  fill="#C1483A" opacity="0.06"/>
-
-            <g fill="#C1483A">
-              <circle class="spark-point" cx="0"   cy="90"  r="3"/>
-              <circle class="spark-point" cx="40"  cy="95"  r="3"/>
-              <circle class="spark-point" cx="80"  cy="60"  r="3"/>
-              <circle class="spark-point" cx="120" cy="100" r="3"/>
-              <circle class="spark-point" cx="160" cy="40"  r="3"/>
-              <circle class="spark-point" cx="200" cy="85"  r="3"/>
-              <circle class="spark-point" cx="240" cy="90"  r="3"/>
-              <circle class="spark-point" cx="280" cy="20"  r="4" fill="#16302A"/>
-              <circle class="spark-point" cx="320" cy="95"  r="3"/>
-              <circle class="spark-point" cx="360" cy="70"  r="3"/>
-              <circle class="spark-point" cx="400" cy="55"  r="3"/>
-              <circle class="spark-point" cx="440" cy="100" r="3"/>
-              <circle class="spark-point" cx="480" cy="65"  r="3"/>
-              <circle class="spark-point" cx="520" cy="10"  r="4" fill="#16302A"/>
-              <circle class="spark-point" cx="560" cy="80"  r="3"/>
-            </g>
-          </svg>
-          <p class="text-[11px] text-ink-900/40 mt-1">Dark markers = restocking days (largest single outlays)</p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- Spending by category with budget ticks -->
-        <div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6">
-          <div class="flex items-center justify-between mb-4">
-            <p class="text-sm font-semibold text-ink-900">Spending by category</p>
-            <p class="text-[11px] text-ink-900/40 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-sm bg-ink-900 inline-block"></span> budget ceiling
-            </p>
-          </div>
-          <div class="space-y-3">
-            <!-- each row: bar width = % of category total spent; tick = budget line -->
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Inventory / Restocking</span>
-              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
-                <div class="h-full rounded-full bg-rust-500" style="width:100%"></div>
-                <div class="budget-tick" style="left:85%"></div>
+        <!-- 2. Middle Column: Filters & Budget Tracker -->
+        <div class="lg:col-span-1 flex flex-col gap-6">
+          
+          <!-- Custom Date Range Card -->
+          <div class="bg-white border border-paper-200 rounded-2xl p-5 shadow-sm">
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-3">Custom Date Range</p>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <input type="date" class="field-input px-3 py-2 text-xs font-mono text-ink-900/70" title="Start Date">
+                <span class="text-ink-900/30 font-medium">-</span>
+                <input type="date" class="field-input px-3 py-2 text-xs font-mono text-ink-900/70" title="End Date">
               </div>
-              <span class="font-mono text-sm text-rust-500 w-32 text-right">6,000,000 UZS</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-rose-400"></span>Payroll</span>
-              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
-                <div class="h-full rounded-full bg-rust-500" style="width:47%"></div>
-                <div class="budget-tick" style="left:50%"></div>
-              </div>
-              <span class="font-mono text-sm text-rust-500 w-32 text-right">2,800,000 UZS</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Rent</span>
-              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
-                <div class="h-full rounded-full bg-rust-500" style="width:25%"></div>
-                <div class="budget-tick" style="left:25%"></div>
-              </div>
-              <span class="font-mono text-sm text-rust-500 w-32 text-right">1,500,000 UZS</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-yellow-400"></span>Utilities</span>
-              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
-                <div class="h-full rounded-full bg-rust-500" style="width:13%"></div>
-                <div class="budget-tick" style="left:10%"></div>
-              </div>
-              <span class="font-mono text-sm text-rust-500 w-32 text-right">780,000 UZS</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-orange-400"></span>Maintenance & Repairs</span>
-              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
-                <div class="h-full rounded-full bg-rust-500" style="width:9%"></div>
-                <div class="budget-tick" style="left:15%"></div>
-              </div>
-              <span class="font-mono text-sm text-rust-500 w-32 text-right">540,000 UZS</span>
-            </div>
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-2 text-sm text-ink-900 w-44 shrink-0"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Supplies</span>
-              <div class="relative flex-1 h-2 rounded-full bg-paper-100 overflow-visible">
-                <div class="h-full rounded-full bg-rust-500" style="width:7%"></div>
-                <div class="budget-tick" style="left:8%"></div>
-              </div>
-              <span class="font-mono text-sm text-rust-500 w-32 text-right">430,000 UZS</span>
+              <button class="w-full py-2 rounded-lg bg-paper-100 hover:bg-paper-200 text-ink-900 text-xs font-semibold transition border border-paper-200">
+                Apply Filter
+              </button>
             </div>
           </div>
-          <p class="text-[11px] text-ink-900/40 mt-4">Repairs is the only line past its monthly ceiling this month.</p>
+
+          <!-- NEW IDEA: Budget Health Tracker -->
+          <div class="bg-white border border-paper-200 rounded-2xl p-5 shadow-sm flex-1 flex flex-col justify-center">
+            <div class="flex justify-between items-center mb-1">
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Monthly Budget</p>
+              <button class="text-[10px] text-brand-600 hover:underline font-medium">Edit limit</button>
+            </div>
+            <div class="mt-2">
+              <div class="flex items-end justify-between mb-2">
+                <span class="font-mono font-bold text-ink-900 text-lg">12.75M</span>
+                <span class="text-xs font-mono text-ink-900/40 mb-1">/ 15.00M UZS</span>
+              </div>
+              <!-- Progress Bar -->
+              <div class="w-full h-2 rounded-full bg-paper-100 overflow-hidden mb-2">
+                <div class="h-full bg-rust-500 rounded-full" style="width:85%"></div>
+              </div>
+              <p class="text-[11px] text-rust-600 font-medium flex items-center gap-1">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+                85% of budget reached
+              </p>
+            </div>
+          </div>
+
         </div>
 
-        <!-- NEW: Top vendors -->
-        <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
-          <div class="px-6 py-3 border-b border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Top vendors this month</p>
-          </div>
-          <div class="px-6 divide-y divide-paper-200">
-            <div class="flex items-center justify-between py-3.5">
-              <div>
-                <p class="text-sm text-ink-900">Silk Road Wholesale</p>
-                <p class="text-[11px] text-ink-900/40">4 payments</p>
-              </div>
-              <span class="font-mono font-semibold text-sm text-rust-500">4,200,000</span>
+        <!-- 3. Spending by category -->
+        <div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6 shadow-sm flex flex-col justify-center">
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Spending by category</p>
+          <div class="space-y-3.5">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-36 lg:w-44 shrink-0 truncate"><span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>Inventory</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden"><div class="h-full bg-rust-500" style="width:100%"></div></div>
+              <span class="font-mono text-xs lg:text-sm text-rust-500 w-24 lg:w-32 text-right">6,000,000 UZS</span>
             </div>
-            <div class="flex items-center justify-between py-3.5">
-              <div>
-                <p class="text-sm text-ink-900">Payroll — staff</p>
-                <p class="text-[11px] text-ink-900/40">6 payments</p>
-              </div>
-              <span class="font-mono font-semibold text-sm text-rust-500">2,800,000</span>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-36 lg:w-44 shrink-0 truncate"><span class="w-2 h-2 rounded-full bg-rose-400 shrink-0"></span>Payroll</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden"><div class="h-full bg-rust-500" style="width:47%"></div></div>
+              <span class="font-mono text-xs lg:text-sm text-rust-500 w-24 lg:w-32 text-right">2,800,000 UZS</span>
             </div>
-            <div class="flex items-center justify-between py-3.5">
-              <div>
-                <p class="text-sm text-ink-900">Tashkent Property Co.</p>
-                <p class="text-[11px] text-ink-900/40">1 payment</p>
-              </div>
-              <span class="font-mono font-semibold text-sm text-rust-500">1,500,000</span>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-36 lg:w-44 shrink-0 truncate"><span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>Rent</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden"><div class="h-full bg-rust-500" style="width:25%"></div></div>
+              <span class="font-mono text-xs lg:text-sm text-rust-500 w-24 lg:w-32 text-right">1,500,000 UZS</span>
             </div>
-            <div class="flex items-center justify-between py-3.5">
-              <div>
-                <p class="text-sm text-ink-900">Namangan Fresh Produce</p>
-                <p class="text-[11px] text-ink-900/40">3 payments</p>
-              </div>
-              <span class="font-mono font-semibold text-sm text-rust-500">1,180,000</span>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-36 lg:w-44 shrink-0 truncate"><span class="w-2 h-2 rounded-full bg-yellow-400 shrink-0"></span>Utilities</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden"><div class="h-full bg-rust-500" style="width:13%"></div></div>
+              <span class="font-mono text-xs lg:text-sm text-rust-500 w-24 lg:w-32 text-right">780,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-36 lg:w-44 shrink-0 truncate"><span class="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>Maintenance</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden"><div class="h-full bg-rust-500" style="width:9%"></div></div>
+              <span class="font-mono text-xs lg:text-sm text-rust-500 w-24 lg:w-32 text-right">540,000 UZS</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-2 text-sm text-ink-900 w-36 lg:w-44 shrink-0 truncate"><span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>Supplies</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden"><div class="h-full bg-rust-500" style="width:7%"></div></div>
+              <span class="font-mono text-xs lg:text-sm text-rust-500 w-24 lg:w-32 text-right">430,000 UZS</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Recent expenses w/ recurring tags -->
-      <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
-        <div class="px-6 py-3 border-b border-paper-200 flex items-center justify-between">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Recent expenses</p>
-          <p class="text-[11px] text-ink-900/40 flex items-center gap-3">
-            <span class="flex items-center gap-1"><span class="recurring-tag fixed">Fixed</span> repeats monthly</span>
-            <span class="flex items-center gap-1"><span class="recurring-tag variable">Variable</span> one-off</span>
-          </p>
+      <!-- Recent expenses Table & Paginator -->
+      <div class="bg-white border border-paper-200 rounded-2xl shadow-sm overflow-x-auto">
+        <div class="px-6 py-4 border-b border-paper-200 flex items-center justify-between">
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expense History</p>
+          
+          <!-- Optional mini search in table -->
+          <div class="relative w-48 hidden sm:block">
+            <input type="text" placeholder="Search note..." class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-paper-50 border border-paper-200 text-xs focus:outline-none focus:border-brand-500">
+            <svg class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-900/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </div>
         </div>
-        <table id="recentExpensesTable" class="w-full text-sm">
+
+        <table id="recentExpensesTable" class="w-full text-sm min-w-[700px]">
           <thead>
-            <tr class="border-b border-paper-200">
+            <tr class="border-b border-paper-200 bg-paper-50/50">
               <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Date</th>
               <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Reason</th>
-              <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Type</th>
               <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Note</th>
               <th class="text-right px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Amount</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-paper-200">
             <tr>
-              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 14</td>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Today, 1:40 PM</td>
               <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Inventory / Restocking</span></td>
-              <td class="px-6 py-3.5"><span class="recurring-tag variable">Variable</span></td>
-              <td class="px-6 py-3.5 text-ink-900/60">Weekly produce order</td>
-              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">340,000 UZS</td>
+              <td class="px-6 py-3.5 text-ink-900/60">Fresh Produce Distributors — weekly delivery</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">210,000 UZS</td>
             </tr>
             <tr>
-              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 13</td>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Yesterday, 4:15 PM</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-yellow-400"></span>Utilities</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Tashkent Power Co. — August electricity</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">260,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Yesterday, 11:00 AM</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-slate-400"></span>Supplies</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Karavan Packaging — bags & till rolls</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">95,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Yesterday, 9:30 AM</td>
               <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-orange-400"></span>Maintenance & Repairs</span></td>
-              <td class="px-6 py-3.5"><span class="recurring-tag variable">Variable</span></td>
-              <td class="px-6 py-3.5 text-ink-900/60">Fridge compressor fix</td>
-              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">210,000 UZS</td>
+              <td class="px-6 py-3.5 text-ink-900/60">ColdTech Service — freezer repair</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">125,000 UZS</td>
             </tr>
             <tr>
-              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 1</td>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Aug 12, 2026</td>
               <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Rent</span></td>
-              <td class="px-6 py-3.5"><span class="recurring-tag fixed">Fixed</span></td>
-              <td class="px-6 py-3.5 text-ink-900/60">July rent</td>
-              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">1,500,000 UZS</td>
+              <td class="px-6 py-3.5 text-ink-900/60">Monthly rent — September installment</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">1,500,000 UZS</td>
             </tr>
             <tr>
-              <td class="px-6 py-3.5 font-mono text-ink-900/50">Jul 1</td>
-              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-teal-400"></span>Insurance</span></td>
-              <td class="px-6 py-3.5"><span class="recurring-tag fixed">Fixed</span></td>
-              <td class="px-6 py-3.5 text-ink-900/60">Storefront policy</td>
-              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">310,000 UZS</td>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Aug 11, 2026</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-fuchsia-400"></span>Marketing</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Local newspaper ad</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">90,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Aug 10, 2026</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-lime-400"></span>Transport & Delivery</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Fuel & delivery van service</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">300,000 UZS</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">Aug 09, 2026</td>
+              <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Inventory / Restocking</span></td>
+              <td class="px-6 py-3.5 text-ink-900/60">Dairy Farms Co. — delivery</td>
+              <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">640,000 UZS</td>
             </tr>
           </tbody>
         </table>
+
+        <!-- Table Paginator -->
+        <div class="px-6 py-4 border-t border-paper-200 bg-paper-50/30 flex items-center justify-between flex-wrap gap-4">
+          <p class="text-xs text-ink-900/50 font-medium">Showing <span class="text-ink-900">1</span> to <span class="text-ink-900">8</span> of <span class="text-ink-900">42</span> expenses</p>
+          <div class="flex items-center gap-1.5">
+            <button class="px-3 py-1.5 rounded-lg border border-paper-200 text-xs font-semibold text-ink-900/40 bg-paper-50 cursor-not-allowed" disabled>Prev</button>
+            <button class="w-8 h-8 rounded-lg bg-ink-900 text-white text-xs font-semibold transition">1</button>
+            <button class="w-8 h-8 rounded-lg border border-paper-200 text-ink-900 text-xs font-semibold hover:bg-white transition">2</button>
+            <button class="w-8 h-8 rounded-lg border border-paper-200 text-ink-900 text-xs font-semibold hover:bg-white transition">3</button>
+            <span class="px-1 text-ink-900/40 text-xs">...</span>
+            <button class="w-8 h-8 rounded-lg border border-paper-200 text-ink-900 text-xs font-semibold hover:bg-white transition">6</button>
+            <button class="px-3 py-1.5 rounded-lg border border-paper-200 text-xs font-semibold text-ink-900 hover:bg-white transition">Next</button>
+          </div>
+        </div>
+
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- Add expense modal (unchanged, kept as-is) -->
+<!-- Add expense modal -->
 <div id="expenseModal" data-show="false" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200">
-  <div onclick="closeAddExpenseModal()" class="absolute inset-0 bg-ink-900/40"></div>
-  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
-    <p class="font-display font-semibold text-ink-900 text-lg">Add expense</p>
-    <p class="text-xs text-ink-900/50 mt-0.5">Record money leaving the business</p>
+  <div onclick="closeAddExpenseModal()" class="absolute inset-0 bg-ink-900/60 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[95vh] overflow-y-auto">
+    <div class="flex items-start justify-between mb-2">
+      <div>
+        <p class="font-display font-semibold text-ink-900 text-lg">Add expense</p>
+        <p class="text-xs text-ink-900/50 mt-0.5">Record money leaving the business</p>
+      </div>
+      <button onclick="closeAddExpenseModal()" class="p-2 -mr-2 rounded-full text-ink-900/40 hover:bg-paper-50 hover:text-ink-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
 
-    <label class="block mt-5">
+    <!-- Total -->
+    <label class="block mt-6">
       <span class="field-label">Total amount</span>
       <div class="relative">
-        <input id="emAmount" class="w-full pl-4 pr-16 py-3.5 rounded-xl bg-paper-50 border border-paper-200 font-mono text-2xl font-bold text-rust-500 focus:outline-none focus:ring-2 focus:ring-rust-500 focus:border-rust-500"
+        <input id="emAmount" class="w-full pl-4 pr-16 py-3.5 rounded-xl bg-paper-50 border border-paper-200 font-mono text-2xl font-bold text-rust-500 focus:outline-none focus:ring-2 focus:ring-rust-500 focus:border-rust-500 transition"
           type="number" min="0" step="0.01" placeholder="0">
         <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-mono text-ink-900/40">UZS</span>
       </div>
     </label>
 
-    <div class="mt-4">
+    <!-- Reason -->
+    <div class="mt-5">
       <span class="field-label">Reason</span>
       <div class="grid grid-cols-2 gap-2">
         <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="true">
           <input type="radio" name="em-reason" value="Inventory / Restocking" data-dot="bg-amber-400" class="hidden" checked>
-          <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>Inventory / Restocking
+          <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>Inventory
         </label>
         <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
           <input type="radio" name="em-reason" value="Payroll" data-dot="bg-rose-400" class="hidden">
@@ -426,23 +397,11 @@
         </label>
         <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
           <input type="radio" name="em-reason" value="Maintenance & Repairs" data-dot="bg-orange-400" class="hidden">
-          <span class="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>Maintenance & Repairs
+          <span class="w-2 h-2 rounded-full bg-orange-400 shrink-0"></span>Maintenance
         </label>
         <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
           <input type="radio" name="em-reason" value="Supplies" data-dot="bg-slate-400" class="hidden">
           <span class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>Supplies
-        </label>
-        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
-          <input type="radio" name="em-reason" value="Insurance" data-dot="bg-teal-400" class="hidden">
-          <span class="w-2 h-2 rounded-full bg-teal-400 shrink-0"></span>Insurance
-        </label>
-        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
-          <input type="radio" name="em-reason" value="Transport & Delivery" data-dot="bg-lime-400" class="hidden">
-          <span class="w-2 h-2 rounded-full bg-lime-400 shrink-0"></span>Transport & Delivery
-        </label>
-        <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
-          <input type="radio" name="em-reason" value="Marketing" data-dot="bg-fuchsia-400" class="hidden">
-          <span class="w-2 h-2 rounded-full bg-fuchsia-400 shrink-0"></span>Marketing
         </label>
         <label class="reason-pill flex items-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
           <input type="radio" name="em-reason" value="Other" data-dot="bg-ink-900/30" class="hidden">
@@ -451,40 +410,34 @@
       </div>
     </div>
 
-    <!-- NEW: recurring toggle -->
-    <div class="mt-4">
-      <span class="field-label">Type</span>
-      <div class="grid grid-cols-2 gap-2">
-        <label class="reason-pill flex items-center justify-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false" id="typeVariableLabel">
-          <input type="radio" name="em-type" value="Variable" class="hidden" checked>
-          One-off
-        </label>
-        <label class="reason-pill flex items-center justify-center gap-2 text-sm font-medium px-3 py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false" id="typeFixedLabel">
-          <input type="radio" name="em-type" value="Fixed" class="hidden">
-          Repeats monthly
-        </label>
-      </div>
+    <!-- Date & Note Row -->
+    <div class="grid grid-cols-2 gap-4 mt-5">
+      <label class="block">
+        <span class="field-label">Date</span>
+        <input id="emDate" class="field-input font-mono" type="date">
+      </label>
+      
+      <!-- NEW IDEA: Receipt Upload -->
+      <label class="block">
+        <span class="field-label flex justify-between">Receipt <span class="text-[10px] text-ink-900/40 font-normal mt-0.5">(Optional)</span></span>
+        <div class="relative flex items-center justify-center w-full h-[42px] px-3 border border-dashed border-paper-200 rounded-xl bg-paper-50 hover:bg-paper-100 cursor-pointer transition">
+          <span class="text-xs text-ink-900/50 font-medium flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+            Attach File
+          </span>
+          <input type="file" class="opacity-0 absolute inset-0 cursor-pointer" accept="image/*,.pdf">
+        </div>
+      </label>
     </div>
 
-    <!-- NEW: vendor field -->
-    <label class="block mt-4">
-      <span class="field-label">Vendor / payee <span class="text-ink-900/30 font-normal">(optional)</span></span>
-      <input id="emVendor" class="field-input" type="text" placeholder="e.g. Silk Road Wholesale">
-    </label>
-
-    <label class="block mt-4">
-      <span class="field-label">Date</span>
-      <input id="emDate" class="field-input font-mono" type="date">
-    </label>
-
-    <label class="block mt-4">
+    <label class="block mt-5">
       <span class="field-label">Note</span>
       <textarea id="emNote" class="field-input" rows="2" placeholder="What was this for?"></textarea>
     </label>
 
-    <div class="flex gap-3 mt-6">
-      <button type="button" onclick="closeAddExpenseModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
-      <button type="button" onclick="saveExpense()" class="flex-1 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold transition">Save expense</button>
+    <div class="flex gap-3 mt-8">
+      <button type="button" onclick="closeAddExpenseModal()" class="flex-1 py-3 rounded-xl border border-paper-200 text-sm font-semibold text-ink-900/60 hover:bg-paper-50 transition">Cancel</button>
+      <button type="button" onclick="saveExpense()" class="flex-1 py-3 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold shadow-sm transition">Save expense</button>
     </div>
   </div>
 </div>
@@ -493,16 +446,9 @@
   function openAddExpenseModal() {
     document.getElementById('emAmount').value = '';
     document.getElementById('emNote').value = '';
-    document.getElementById('emVendor').value = '';
     document.getElementById('emDate').valueAsDate = new Date();
-    document.querySelectorAll('#expenseModal .reason-pill').forEach((l) => {
-      const isReason = l.querySelector('input[name="em-reason"]');
-      if (isReason) l.dataset.active = isReason.value === 'Inventory / Restocking';
-    });
+    document.querySelectorAll('.reason-pill').forEach((l, i) => l.dataset.active = i === 0);
     document.querySelector('input[name="em-reason"]').checked = true;
-    document.getElementById('typeVariableLabel').dataset.active = true;
-    document.getElementById('typeFixedLabel').dataset.active = false;
-    document.querySelector('input[name="em-type"][value="Variable"]').checked = true;
 
     const modal = document.getElementById('expenseModal');
     modal.dataset.show = 'true';
@@ -513,15 +459,11 @@
     document.getElementById('expenseModal').dataset.show = 'false';
   }
 
-  document.querySelectorAll('#expenseModal .reason-pill').forEach(label => {
+  document.querySelectorAll('.reason-pill').forEach(label => {
     label.addEventListener('click', () => {
-      const input = label.querySelector('input');
-      const group = input.name;
-      document.querySelectorAll(`input[name="${group}"]`).forEach(i => {
-        i.closest('.reason-pill').dataset.active = 'false';
-      });
+      document.querySelectorAll('.reason-pill').forEach(l => l.dataset.active = 'false');
       label.dataset.active = 'true';
-      input.checked = true;
+      label.querySelector('input').checked = true;
     });
   });
 
@@ -535,25 +477,21 @@
     const reasonInput = document.querySelector('input[name="em-reason"]:checked');
     const reasonLabel = reasonInput.value;
     const dotClass = reasonInput.dataset.dot;
-    const typeInput = document.querySelector('input[name="em-type"]:checked').value;
-    const typeClass = typeInput === 'Fixed' ? 'fixed' : 'variable';
-    const typeText = typeInput === 'Fixed' ? 'Fixed' : 'Variable';
     const note = document.getElementById('emNote').value.trim();
     const dateVal = document.getElementById('emDate').value;
 
     const dateLabel = dateVal
-      ? new Date(dateVal + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric' })
+      ? new Date(dateVal + 'T00:00:00').toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
       : 'Today';
 
     const amountLabel = amount.toLocaleString('en-US') + ' UZS';
 
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td class="px-6 py-3.5 font-mono text-ink-900/50">${dateLabel}</td>
+      <td class="px-6 py-3.5 font-mono text-ink-900/50 whitespace-nowrap">${dateLabel}</td>
       <td class="px-6 py-3.5"><span class="flex items-center gap-2 text-ink-900"><span class="w-2 h-2 rounded-full ${dotClass}"></span>${reasonLabel}</span></td>
-      <td class="px-6 py-3.5"><span class="recurring-tag ${typeClass}">${typeText}</span></td>
       <td class="px-6 py-3.5 text-ink-900/60">${note ? note : '—'}</td>
-      <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500">${amountLabel}</td>
+      <td class="px-6 py-3.5 text-right font-mono font-semibold text-rust-500 whitespace-nowrap">${amountLabel}</td>
     `;
 
     const tbody = document.querySelector('#recentExpensesTable tbody');

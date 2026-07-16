@@ -167,7 +167,6 @@ def products_list(request):
 
 def product_add(request):
     if request.method == "POST":
-        print(request.POST.get("barcode"))
         name = request.POST.get("name")
         barcode = request.POST.get("barcode")
         sales_price = request.POST.get("price")
@@ -242,6 +241,15 @@ def expenses(request):
     yesterdays_expenses = expenses.filter(created_at__date=yesterday).aggregate(Sum("expense"))["expense__sum"] or 0
     weekly_expenses = expenses.filter(created_at__date__range=(last_week, today)).aggregate(Sum("expense"))["expense__sum"] or 0
     month_expenses = expenses.filter(created_at__date__range=(last_month, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+
+    #expense by category
+    expenses_by_category = {
+        item['reason__name']: item['total'] or 0 for item in expenses.values("reason__name").annotate(total=Sum('expense'))
+        }
+        
+
+    print(expenses_by_category)
+
 
     context = {
         "expenses": expenses,
