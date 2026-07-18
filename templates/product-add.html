@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,27 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          ink:   { 900: '#0F211D', 800: '#16302A', 700: '#1E3B33', 600: '#2A4E44' },
-          paper: { 50: '#F6F5F0', 100: '#EFEEE7', 200: '#E4E2D8' },
-          brand: { 400: '#FDBB3D', 500: '#FCAB10', 600: '#E0960C', 700: '#A66E08' },
-          pine:  { 500: '#3E7C6A', 600: '#336657', 700: '#2A5548' },
-          rust:  { 500: '#C1483A', 600: '#A83B2F' },
-        },
-        fontFamily: {
-          display: ['"Space Grotesk"', 'sans-serif'],
-          body: ['Inter', 'sans-serif'],
-          mono: ['"IBM Plex Mono"', 'monospace'],
-        },
-      },
-    },
-  };
-</script>
+<link rel="stylesheet" href="{% static 'css/output.css' %}">
+
 
 <style>
   html { scroll-behavior: smooth; }
