@@ -19,7 +19,12 @@ def percent_change(new_value, old_value):
     
     return percent_change
 
-def dashboard(request):
+def dashboard(request, start, end):
+    custom_range_sales = None
+    if start!=None and end!=None:
+        start = datetime.date((start))
+        end = datetime.date(end)
+        custom_range_sales = Sale.objects.filter(created_at__date__range=(start, end)).aaggregate(Sum("total"))["total__sum"] or 0
     now = localtime().now()
     today = now.date()
     today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -109,7 +114,7 @@ def dashboard(request):
         "avg_percent_change": avg_percent_change,
         "items_sold_change": items_sold_change,
         "sales_by_hour": sales_by_hour,
-        "top_sellers": top_sellers[:5],
+        "top_sellers": top_sellers[:6],
         "yesterday_all_sales": yesterday_all_sales,
         "yesterday_profit": yesterday_profit,
         "yesterday_expenses": yesterday_expenses,
@@ -120,6 +125,7 @@ def dashboard(request):
         "month_profit": month_profit,
         "month_expenses": month_expenses,
         "month_name": now.strftime("%B"),
+        "custom_range_sales": custom_range_sales,
     }
     return render(request, "dashboard.html", context)
 
@@ -234,22 +240,19 @@ def expenses(request):
     today = now.date()
     yesterday = today - timedelta(days=1)
     last_week = today - timedelta(days=7)
-    last_month = today.replace(day=1)
+    month_beginning = today.replace(day=1)
 
     expenses = Expense.objects.all()
     todays_expenses = expenses.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0
     yesterdays_expenses = expenses.filter(created_at__date=yesterday).aggregate(Sum("expense"))["expense__sum"] or 0
     weekly_expenses = expenses.filter(created_at__date__range=(last_week, today)).aggregate(Sum("expense"))["expense__sum"] or 0
-    month_expenses = expenses.filter(created_at__date__range=(last_month, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+    month_expenses = expenses.filter(created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
 
     #expense by category
     expenses_by_category = {
         item['reason__name']: item['total'] or 0 for item in expenses.values("reason__name").annotate(total=Sum('expense'))
         }
         
-
-    print(expenses_by_category)
-
 
     context = {
         "expenses": expenses,
