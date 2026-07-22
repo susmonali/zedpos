@@ -6,6 +6,7 @@ from django.utils.timezone import localtime
 from .models import *
 
 from datetime import datetime, timedelta, time
+from dateutil.relativedelta import relativedelta
 
 import json
 
@@ -19,12 +20,38 @@ def percent_change(new_value, old_value):
     
     return percent_change
 
-def dashboard(request, start, end):
-    custom_range_sales = None
-    if start!=None and end!=None:
-        start = datetime.date((start))
-        end = datetime.date(end)
-        custom_range_sales = Sale.objects.filter(created_at__date__range=(start, end)).aaggregate(Sum("total"))["total__sum"] or 0
+
+def aggregate_period(start, end):
+    context = {
+        "sales": Sale.objects.filter(created_at__date__range=(start, end)).aggregate(Sum("total"))["total__sum"] or 0,
+        "profit": SaleItem.objects.filter(sale__created_at__date__range=(start, end)).aggregate(Sum("profit"))["profit__sum"] or 0,
+        "expenses": Expense.objects.filter(created_at__date__range=(start, end)).aggregate(Sum("expense"))["expense__sum"] or 0,
+        "start_date": start,
+        "end_date": end,
+    }
+    return context
+
+def dashboard(request):
+    #custom_range
+    custom_range_sales = {
+        "sales": 0,
+        "profit": 0,
+        "expenses": 0,
+    }
+
+    start = request.GET.get("start_date")
+    end = request.GET.get("end_date")
+    custom_range_active = False
+    if start and end:
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end, "%Y-%m-%d").date()
+            custom_range_sales = aggregate_period(start_date, end_date)
+            custom_range_active = True
+        except ValueError:
+            pass
+
+
     now = localtime().now()
     today = now.date()
     today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -82,27 +109,27 @@ def dashboard(request, start, end):
         })
 
     #REPORTS
-    #yesterday
-    yesterday_all_sales = Sale.objects.filter(created_at__date=yesterday).aggregate(Sum("total"))["total__sum"] or 0
-    yesterday_profit = SaleItem.objects.filter(sale__created_at__date=yesterday).aggregate(Sum("profit"))["profit__sum"] or 0
-    yesterday_expenses = Expense.objects.filter(created_at__date=yesterday).aggregate(Sum("expense"))["expense__sum"] or 0
+    yesterday_period = aggregate_period(yesterday, yesterday)
+    week_period = aggregate_period(today - timedelta(days=7), today)
+    month_period = aggregate_period(today.replace(day=1), today)
+    month_param = request.GET.get("month")
+    try:
+        selected_month = datetime.strptime(month_param, "%Y-%m").date()
+        print(selected_month)
 
-    #7 days
-    days_7_before = today - timedelta(days=7)
-    days_7_all_sales = Sale.objects.filter(created_at__date__range=(days_7_before, today)).aggregate(Sum("total"))["total__sum"] or 0
-    days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(days_7_before, today)).aggregate(Sum("profit"))["profit__sum"] or 0
-    days_7_expenses = Expense.objects.filter(created_at__date__range=(days_7_before, today)).aggregate(Sum("expense"))["expense__sum"] or 0
-
-    #this month
-    month = today.replace(day=1)
-    month_all_sales = Sale.objects.filter(created_at__date__range=(month, today)).aggregate(Sum("total"))["total__sum"] or 0
-    month_profit = SaleItem.objects.filter(sale__created_at__date__range=(month, today)).aggregate(Sum("profit"))["profit__sum"] or 0
-    month_expenses = Expense.objects.filter(created_at__date__range=(month, today)).aggregate(Sum("expense"))["expense__sum"] or 0
-
-
+    except:
+        selected_month = now.date()
+    month_name = selected_month.strftime("%B")
+    prev_month_param = (selected_month - relativedelta(months=1)).strftime("%Y-%m")
+    month_period = aggregate_period(selected_month, selected_month)
 
     context = {
+        "prev_month_param": prev_month_param,
         "today_sales": today_sales,
+        "custom_range_active": custom_range_active,
+        "custom_sales": custom_range_sales["sales"],
+        "custom_profit": custom_range_sales["profit"],
+        "custom_expenses": custom_range_sales["expenses"],
         "yesterday_sales": yesterday_sales,
         "today_sales_total": today_sales_total,
         "yesterday_sales_total": yesterday_sales_total,
@@ -115,16 +142,16 @@ def dashboard(request, start, end):
         "items_sold_change": items_sold_change,
         "sales_by_hour": sales_by_hour,
         "top_sellers": top_sellers[:6],
-        "yesterday_all_sales": yesterday_all_sales,
-        "yesterday_profit": yesterday_profit,
-        "yesterday_expenses": yesterday_expenses,
-        "days_7_all_sales": days_7_all_sales,
-        "days_7_profit": days_7_profit,
-        "days_7_expenses": days_7_expenses,
-        "month_all_sales": month_all_sales,
-        "month_profit": month_profit,
-        "month_expenses": month_expenses,
-        "month_name": now.strftime("%B"),
+        "yesterday_all_sales": yesterday_period["sales"],
+        "yesterday_profit": yesterday_period["profit"],
+        "yesterday_expenses": yesterday_period["expenses"],
+        "days_7_all_sales": week_period["sales"],
+        "days_7_profit": week_period["profit"],
+        "days_7_expenses": week_period["expenses"],
+        "month_all_sales": month_period["sales"],
+        "month_profit": month_period["profit"],
+        "month_expenses": month_period["expenses"],
+        "month_name": month_name,
         "custom_range_sales": custom_range_sales,
     }
     return render(request, "dashboard.html", context)

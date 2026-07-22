@@ -3,7 +3,6 @@ from .views import *
 
 urlpatterns = [
     path('', dashboard, name="dashboard"),
-    path('start_date=<str:start>&end_date=<str:end>/', dashboard),
     path('pos/', point_of_sale, name="pos"),
     path('products/', products_list, name="products"),
     path('restock/<int:i>/', restock, name="restock"),
