@@ -7,6 +7,7 @@ from .models import *
 
 from datetime import datetime, timedelta, time
 from dateutil.relativedelta import relativedelta
+import calendar
 
 import json
 
@@ -111,20 +112,20 @@ def dashboard(request):
     #REPORTS
     yesterday_period = aggregate_period(yesterday, yesterday)
     week_period = aggregate_period(today - timedelta(days=7), today)
-    month_period = aggregate_period(today.replace(day=1), today)
     month_param = request.GET.get("month")
     try:
         selected_month = datetime.strptime(month_param, "%Y-%m").date()
-        print(selected_month)
-
     except:
-        selected_month = now.date()
+        selected_month = now.date().replace(day=1)
     month_name = selected_month.strftime("%B")
     prev_month_param = (selected_month - relativedelta(months=1)).strftime("%Y-%m")
-    month_period = aggregate_period(selected_month, selected_month)
+    next_month_param = (selected_month + relativedelta(months=1)).strftime("%Y-%m")if selected_month < today.replace(day=1) else None
+    last_day_num = calendar.monthrange(selected_month.year, selected_month.month)
+    month_period = aggregate_period(selected_month, selected_month+timedelta(days=last_day_num[1]))
 
     context = {
         "prev_month_param": prev_month_param,
+        "next_month_param": next_month_param, 
         "today_sales": today_sales,
         "custom_range_active": custom_range_active,
         "custom_sales": custom_range_sales["sales"],
@@ -279,7 +280,8 @@ def expenses(request):
     expenses_by_category = {
         item['reason__name']: item['total'] or 0 for item in expenses.values("reason__name").annotate(total=Sum('expense'))
         }
-        
+
+    category_most_expenses = expenses.values("reason__name").annotate(total=Sum("expense")).order_by("-total").first()
 
     context = {
         "expenses": expenses,
@@ -287,5 +289,9 @@ def expenses(request):
         "yesterdays_expenses": yesterdays_expenses,
         "weekly_expenses": weekly_expenses,
         "month_expenses": month_expenses,
+        "products": Product.objects.all().order_by("-active"),
+        "category_most_expenses": category_most_expenses,
+        "today": today,
+        "categories": ExpenseCategory.objects.all()
     }
     return render(request, 'expenses.html', context)

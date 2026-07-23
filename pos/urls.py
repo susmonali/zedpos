@@ -12,4 +12,6 @@ urlpatterns = [
     path('products/<int:i>/archive/', archive_product, name="archive_product"),
     path('products/<int:i>/unarchive/', unarchive_product, name="unarchive_product"),
     path('expenses/', expenses, name="expenses"),
+    path('expenses/add/', expenses, name="add_expense"),
+
 ]
