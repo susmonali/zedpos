@@ -183,37 +183,41 @@
           </div>
 
           <!-- Monthly, now with prev/next month navigation -->
-          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
-            <div class="px-6 flex items-center justify-between mb-4">
-              <p class="font-display text-sm font-semibold text-ink-900">Monthly</p>
-              <div class="flex items-center gap-1">
-                <a href="{% url 'dashboard' %}?month={{ prev_month_param }}"
-                   class="w-5 h-5 rounded-full flex items-center justify-center text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 transition"
-                   aria-label="Previous month">‹</a>
-                <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5">{{ month_name }}</span>
-                <a href="{% url 'dashboard' %}?month={{ next_month_param }}"
-                   class="w-5 h-5 rounded-full flex items-center justify-center text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 transition"
-                   aria-label="Next month">›</a>
-              </div>
-            </div>
-            <div class="px-6">
-              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
-              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ month_all_sales }} UZS</p>
-            </div>
-            <div class="dash-divider my-4 mx-6"></div>
-            <div class="px-6 grid grid-cols-2 gap-4">
-                <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
-                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ month_profit }} UZS</p>
-              </div>
-              <div>
+<div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
+<div class="px-6 flex items-center justify-between mb-4">
+  <p class="font-display text-sm font-semibold text-ink-900">Monthly</p>
+  <div class="flex items-center justify-between w-40 shrink-0">
+    <a href="{% url 'dashboard' %}?month={{ prev_month_param }}"
+       class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 active:bg-paper-200 transition"
+       aria-label="Previous month">‹</a>
 
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
-                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ month_expenses }} UZS</p>
-              </div>
-              
-            </div>
-          </div>
+    <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5 text-center truncate">{{ month_name }}</span>
+
+    {% if next_month_param %}
+    <a href="{% url 'dashboard' %}?month={{ next_month_param }}"
+       class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 active:bg-paper-200 transition"
+       aria-label="Next month">›</a>
+    {% else %}
+    <span class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/15 cursor-not-allowed" aria-hidden="true">›</span>
+    {% endif %}
+  </div>
+</div>
+  <div class="px-6">
+    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
+    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ month_all_sales }} UZS</p>
+  </div>
+  <div class="dash-divider my-4 mx-6"></div>
+  <div class="px-6 grid grid-cols-2 gap-4">
+    <div>
+      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
+      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ month_profit }} UZS</p>
+    </div>
+    <div>
+      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
+      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ month_expenses }} UZS</p>
+    </div>
+  </div>
+</div>
 
 <!-- Custom Range -->
 <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
