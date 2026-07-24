@@ -223,7 +223,7 @@
 
       <label class="flex flex-col gap-1">
         <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Date</span>
-        <input type="date" name="date" required
+        <input type="date" name="date" value="{% now 'Y-m-d' %}" required
           class="text-sm font-mono px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
       </label>
 
@@ -231,12 +231,9 @@
         <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Category</span>
         <select name="category" required
           class="text-sm px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
-          <option value="RENT">Rent</option>
-          <option value="UTILITIES">Utilities</option>
-          <option value="SUPPLIES">Supplies</option>
-          <option value="PAYROLL">Payroll</option>
-          <option value="LOGISTICS">Logistics</option>
-          <option value="OTHER">Other</option>
+          {% for cat in categories %}
+          <option value="{{ cat.id }}">{{ cat.name }}</option>
+          {% endfor %}
         </select>
       </label>
 

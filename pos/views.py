@@ -295,3 +295,11 @@ def expenses(request):
         "categories": ExpenseCategory.objects.all()
     }
     return render(request, 'expenses.html', context)
+
+def add_expense(request):
+    if request.method == "POST":
+        amount = request.POST.get("amount")
+        category = ExpenseCategory.objects.get(id=int(request.POST.get("category")))
+        date = request.POST.get("date")
+        Expense.objects.create(expense=amount, reason=category, created_at=date)
+    return redirect("/expenses/")
