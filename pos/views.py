@@ -264,6 +264,22 @@ def restock(request, i):
 
 
 def expenses(request):
+    start = request.GET.get("start_date")
+    end = request.GET.get("end_date")
+    category = request.GET.get("category")
+    if start and end:
+        try:
+            start = datetime.strptime(start, "%Y-%m-%d")
+            end = datetime.strptime(end, "%Y-%m-%d")
+        except ValueError:
+            pass
+
+    if category:
+        try:
+            category = ExpenseCategory.objects.get(id=category)
+        except:
+            pass
+
     now = localtime().now()
     today = now.date()
     yesterday = today - timedelta(days=1)
@@ -276,6 +292,9 @@ def expenses(request):
     weekly_expenses = expenses.filter(created_at__date__range=(last_week, today)).aggregate(Sum("expense"))["expense__sum"] or 0
     month_expenses = expenses.filter(created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
 
+    custom_range_expenses = expenses.filter(created_at__date__range=(start, end))
+    print(custom_range_expenses)
+
     #expense by category
     expenses_by_category = {
         item['reason__name']: item['total'] or 0 for item in expenses.values("reason__name").annotate(total=Sum('expense'))
@@ -284,7 +303,7 @@ def expenses(request):
     category_most_expenses = expenses.values("reason__name").annotate(total=Sum("expense")).order_by("-total").first()
 
     context = {
-        "expenses": expenses,
+        "expenses": expenses.order_by("-created_at"),
         "todays_expenses": todays_expenses,
         "yesterdays_expenses": yesterdays_expenses,
         "weekly_expenses": weekly_expenses,
