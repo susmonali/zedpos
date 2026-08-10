@@ -323,7 +323,6 @@ def expenses(request):
     expenses_by_category = {
         item['category__name']: item['total'] or 0 for item in expenses.values("category__name").annotate(total=Sum('expense'))
         }
-
     category_most_expenses = expenses.values("category__name").annotate(total=Sum("expense")).order_by("-total").first()
     
     context = {
@@ -332,6 +331,7 @@ def expenses(request):
         "yesterdays_expenses": yesterdays_expenses,
         "weekly_expenses": weekly_expenses,
         "month_expenses": month_expenses,
+        "expenses_by_category": expenses_by_category,
         "products": Product.objects.all().order_by("-active"),
         "category_most_expenses": category_most_expenses,
         "today": today,
@@ -349,9 +349,19 @@ def add_expense(request):
     return redirect("/expenses/")
 
 
-def categories(request):
+def category_detail(request, cat):
+    now = localtime().now()
+    today = now.date()
+    month_beginning = today.replace(day=1)
 
+    total_expenses = Expense.objects.filter(category__name=cat).aggregate(Sum("expense"))["expense__sum"] or 0
+    month_expenses = Expense.objects.filter(category__name=cat, created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+    expenses = Expense.objects.filter(category__name=cat)
     context = {
-        "categories": ExpenseCategory.objects.annotate(total_expense=Coalesce(Sum('expense__expense'), 0)).order_by("total_expense")
+        "category": ExpenseCategory.objects.get(name=cat),
+        "total_expenses": total_expenses,
+        "this_month_expenses": month_expenses,
+        "expenses": expenses,
     }
-    return render("categories.html", context)
+    return render(request, "category_detail.html", context)
+
