@@ -1,5 +1,7 @@
 from django.urls import path, include
 from .views import *
+from pos import views as pos_views
+
 
 urlpatterns = [
     path('', dashboard, name="dashboard"),
@@ -13,5 +15,7 @@ urlpatterns = [
     path('products/<int:i>/unarchive/', unarchive_product, name="unarchive_product"),
     path('expenses/', expenses, name="expenses"),
     path('expenses/add/', add_expense, name="add_expense"),
+    path('manifest.json', pos_views.manifest, name='manifest'),
+    path('sw.js', pos_views.service_worker, name='service_worker'),
 
 ]

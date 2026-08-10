@@ -31,31 +31,31 @@ class SaleItem(models.Model):
 
     def __str__(self):
         return self.product.name
-    
+
 class ExpenseCategory(models.Model):
     name = models.CharField(max_length=100)
 
     def __str__(self):
         return self.name
-    
+
     class Meta:
         verbose_name_plural = "Expense Categories"
         verbose_name = "Expense Category"
-    
+
 class Expense(models.Model):
     expense = models.IntegerField()
-    reason = models.ForeignKey(ExpenseCategory, on_delete=models.CASCADE)
+    category = models.ForeignKey(ExpenseCategory, on_delete=models.CASCADE)
     created_at = models.DateTimeField()
+    note = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return f"{self.expense}"
-    
+
 class Stock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     qty = models.FloatField()
     created_at = models.DateTimeField()
-    paid = models.IntegerField()
-    reference = models.CharField(max_length=250, null=True, blank=True)
+
 
     def __str__(self):
         return self.product.name

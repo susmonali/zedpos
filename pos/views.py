@@ -9,7 +9,26 @@ from datetime import datetime, timedelta, time
 from dateutil.relativedelta import relativedelta
 import calendar
 
+from django.db.models.functions import Coalesce
+
 import json
+
+from django.http import HttpResponse
+from django.conf import settings
+import os
+
+def manifest(request):
+    path = os.path.join(settings.BASE_DIR, 'pos/pwa/manifest.json')
+    with open(path, 'r') as f:
+        content = f.read()
+    return HttpResponse(content, content_type='application/manifest+json')
+
+def service_worker(request):
+    path = os.path.join(settings.BASE_DIR, 'pos/pwa/sw.js')
+    with open(path, 'r') as f:
+        content = f.read()
+    return HttpResponse(content, content_type='application/javascript')
+
 
 def percent_change(new_value, old_value):
     if old_value!=0:
@@ -18,7 +37,7 @@ def percent_change(new_value, old_value):
         percent_change = 100
     else:
         percent_change = 0
-    
+
     return percent_change
 
 
@@ -79,7 +98,7 @@ def dashboard(request):
                                          ).aggregate(Sum("qty"))["qty__sum"] or 0
     items_sold_yesterday = SaleItem.objects.filter(sale__created_at__range=(yesterday_midnight, yesterday_current_time)
                                                    ).aggregate(Sum("qty"))["qty__sum"] or 0
-    
+
     items_sold_change = percent_change(new_value=items_sold, old_value=items_sold_yesterday)
 
 
@@ -123,9 +142,17 @@ def dashboard(request):
     last_day_num = calendar.monthrange(selected_month.year, selected_month.month)
     month_period = aggregate_period(selected_month, selected_month+timedelta(days=last_day_num[1]))
 
+    products_sale_price = Product.objects.filter(active=True).aggregate(
+       total=Sum(ExpressionWrapper(F("sales_price") * F("qty"), output_field=FloatField()))
+   )["total"] or 0
+    products_total_vendor = Product.objects.filter(active=True).aggregate(
+       total=Sum(ExpressionWrapper(F("vendor_cost") * F("qty"), output_field=FloatField()))
+   )["total"] or 0
+
+
     context = {
         "prev_month_param": prev_month_param,
-        "next_month_param": next_month_param, 
+        "next_month_param": next_month_param,
         "today_sales": today_sales,
         "custom_range_active": custom_range_active,
         "custom_sales": custom_range_sales["sales"],
@@ -154,6 +181,8 @@ def dashboard(request):
         "month_expenses": month_period["expenses"],
         "month_name": month_name,
         "custom_range_sales": custom_range_sales,
+        "products_total_vendor": products_total_vendor,
+        "products_sale_price": products_sale_price,
     }
     return render(request, "dashboard.html", context)
 
@@ -189,7 +218,7 @@ def point_of_sale(request):
                 for item in SaleItem.objects.filter(sale=sale)
             }
         })
-        
+
     return render(request, "pos.html", context)
 
 
@@ -212,7 +241,7 @@ def product_add(request):
         else:
             unit = False
         product = Product.objects.create(name=name, barcode=barcode, sales_price=sales_price, vendor_cost=vendor_cost, qty=qty, weight_based=unit)
-        return redirect("/products/")
+        return redirect("/products/add/")
     return render(request, "product-add.html")
 
 def product_detail(request, i):
@@ -220,7 +249,7 @@ def product_detail(request, i):
     product = Product.objects.get(id=i)
     week = today - timedelta(days=7)
     sold_this_week = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).aggregate(Sum("qty"))["qty__sum"] or 0
-    
+
     sale_history = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product__id=i).order_by("-sale__created_at")[:50]
 
     days_7_profit = SaleItem.objects.filter(sale__created_at__date__range=(week, today), product=product).aggregate(Sum("profit"))["profit__sum"] or 0
@@ -230,7 +259,7 @@ def product_detail(request, i):
         "sold_this_week": sold_this_week,
         "sale_history": sale_history,
         "days_7_profit": days_7_profit,
-        "restock_history": restock_history, 
+        "restock_history": restock_history,
     }
     return render(request, "product-detail.html", context)
 
@@ -255,11 +284,9 @@ def restock(request, i):
     now = localtime().now()
     if request.method == "POST":
         qty = request.POST.get("qty")
-        paid = request.POST.get("paid")
-        reference = request.POST.get("reference")
         product.qty += float(qty)
         product.save()
-        Stock.objects.create(product=product, qty=qty, created_at=now, paid=paid, reference=reference)
+        Stock.objects.create(product=product, qty=qty, created_at=now)
     return redirect(f"/products/{i}/detail/")
 
 
@@ -267,18 +294,6 @@ def expenses(request):
     start = request.GET.get("start_date")
     end = request.GET.get("end_date")
     category = request.GET.get("category")
-    if start and end:
-        try:
-            start = datetime.strptime(start, "%Y-%m-%d")
-            end = datetime.strptime(end, "%Y-%m-%d")
-        except ValueError:
-            pass
-
-    if category:
-        try:
-            category = ExpenseCategory.objects.get(id=category)
-        except:
-            pass
 
     now = localtime().now()
     today = now.date()
@@ -292,16 +307,25 @@ def expenses(request):
     weekly_expenses = expenses.filter(created_at__date__range=(last_week, today)).aggregate(Sum("expense"))["expense__sum"] or 0
     month_expenses = expenses.filter(created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
 
-    custom_range_expenses = expenses.filter(created_at__date__range=(start, end))
-    print(custom_range_expenses)
+    if category:
+        expenses = expenses.filter(category=category)
+
+    if start and end:
+        try:
+            start = datetime.strptime(start, "%Y-%m-%d")
+            end = datetime.strptime(end, "%Y-%m-%d")
+            expenses = expenses.filter(created_at__date__range=(start, end))
+        except:
+            pass
+    
 
     #expense by category
     expenses_by_category = {
-        item['reason__name']: item['total'] or 0 for item in expenses.values("reason__name").annotate(total=Sum('expense'))
+        item['category__name']: item['total'] or 0 for item in expenses.values("category__name").annotate(total=Sum('expense'))
         }
 
-    category_most_expenses = expenses.values("reason__name").annotate(total=Sum("expense")).order_by("-total").first()
-
+    category_most_expenses = expenses.values("category__name").annotate(total=Sum("expense")).order_by("-total").first()
+    
     context = {
         "expenses": expenses.order_by("-created_at"),
         "todays_expenses": todays_expenses,
@@ -311,7 +335,7 @@ def expenses(request):
         "products": Product.objects.all().order_by("-active"),
         "category_most_expenses": category_most_expenses,
         "today": today,
-        "categories": ExpenseCategory.objects.all()
+        "categories": ExpenseCategory.objects.annotate(total_expense=Coalesce(Sum('expense__expense'), 0)).order_by("total_expense"),
     }
     return render(request, 'expenses.html', context)
 
@@ -320,5 +344,14 @@ def add_expense(request):
         amount = request.POST.get("amount")
         category = ExpenseCategory.objects.get(id=int(request.POST.get("category")))
         date = request.POST.get("date")
-        Expense.objects.create(expense=amount, reason=category, created_at=date)
+        note = request.POST.get("note")
+        Expense.objects.create(expense=amount, category=category, created_at=date, note=note)
     return redirect("/expenses/")
+
+
+def categories(request):
+
+    context = {
+        "categories": ExpenseCategory.objects.annotate(total_expense=Coalesce(Sum('expense__expense'), 0)).order_by("total_expense")
+    }
+    return render("categories.html", context)
