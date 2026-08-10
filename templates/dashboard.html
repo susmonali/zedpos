@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 {% load humanize %}
 {% load static %}
-<html lang="en">
+<html lang="uz">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karavan Market — Dashboard</title>
+<title>Karavan Market — Boshqaruv paneli</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="{% static 'css/output.css' %}">
+<link rel="manifest" href="{% url 'manifest' %}">
+<meta name="theme-color" content="#1a1a2e">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register("{% url 'service_worker' %}");
+}
+</script>
 
 <style>
   html { scroll-behavior: smooth; }
@@ -67,10 +74,10 @@
     </div>
 
     <nav class="flex flex-col gap-1">
-      <a href="{% url 'dashboard' %}" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Dashboard</a>
-      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Point of Sale</a>
-      <a href="{% url 'products' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
-      <a href="{% url 'expenses' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Expenses</a>
+      <a href="{% url 'dashboard' %}" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Boshqaruv paneli</a>
+      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Kassa </a>
+      <a href="{% url 'products' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Mahsulotlar</a>
+      <a href="{% url 'expenses' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Xarajatlar</a>
     </nav>
 
   </aside>
@@ -82,7 +89,7 @@
     <header class="px-8 pt-6 pb-4 shrink-0">
       <div class="flex items-start justify-between gap-6 flex-wrap">
         <div>
-          <h1 class="font-display text-2xl font-semibold text-ink-900">Dashboard</h1>
+          <h1 class="font-display text-2xl font-semibold text-ink-900">Boshqaruv paneli</h1>
           <p id="todayDate" class="text-sm text-ink-900/50 mt-0.5"></p>
         </div>
         <span id="clock" class="font-mono text-sm text-ink-900/60 hidden sm:block"></span>
@@ -95,65 +102,61 @@
       <!-- Z-Report strip -->
       <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
         <div class="px-6 py-3 border-b border-paper-200 flex items-center justify-between">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Today · X-Report</p>
-          <p class="text-[11px] font-mono text-ink-900/40">Through {{localtime}}</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Bugun · X-Hisobot</p>
+          <p class="text-[11px] font-mono text-ink-900/40">{{localtime}} holatiga ko'ra</p>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4">
           <div class="px-6 py-5">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Total Sales</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{today_sales_total | intcomma}} UZS</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Umumiy savdo</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{today_sales_total | intcomma}} so'm</p>
 
             <p class="text-xs font-mono {% if percentage_change >= 0 %}text-pine-600{% else %}text-rust-500{% endif %} mt-1">
-                {% if percentage_change >= 0 %}▲{% else %}▼{% endif %} {{percentage_change | floatformat}}% vs yesterday {{ localtime.time }}
+                {% if percentage_change >= 0 %}▲{% else %}▼{% endif %} {{percentage_change | floatformat}}% kecha {{ localtime.time }} ga nisbatan
             </p>
 
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdolar</p>
             <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ today_sales.count }}</p>
             <p class="text-xs font-mono {% if difference >= 0 %}text-pine-600{% else %}text-rust-500{% endif %} mt-1">
-                {% if difference >= 0 %}▲{% else %}▼{% endif %} {{ difference }} vs yesterday</p>
+                {% if difference >= 0 %}▲{% else %}▼{% endif %} {{ difference }} kechagiga nisbatan</p>
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Avg Basket</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ average_basket | floatformat:0 | intcomma }} UZS</p>
-            <p class="text-xs font-mono {% if avg_percent_change >= 0 %}text-pine-600{% else %}text-rust-500{% endif %} mt-1">
-                {% if avg_percent_change >= 0 %}▲{% else %}▼{% endif %} {{ avg_percent_change | floatformat }}% vs yesterday</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Mahsulotlar narxi</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_sale_price }} so'm</p>
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Items Sold</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ items_sold }}</p>
-            <p class="text-xs font-mono {% if items_sold_change >= 0 %}text-pine-600{% else %}text-rust-500{% endif %} mt-1">
-                {% if items_sold_change >= 0 %}▲{% else %}▼{% endif %} {{ items_sold_change | floatformat }}% vs yesterday</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Maxsulotlar tannarxi</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_total_vendor }} so'm</p>
           </div>
         </div>
       </div>
 
           <!-- Period reports: Yesterday / 7 Days / Monthly, ticket-style panels -->
       <div>
-        <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-3 px-1">Reports</p>
+        <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-3 px-1">Hisobotlar</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
           <!-- Yesterday -->
           <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
             <div class="px-6 flex items-center justify-between mb-4">
-              <p class="font-display text-sm font-semibold text-ink-900">Yesterday</p>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Closed</span>
+              <p class="font-display text-sm font-semibold text-ink-900">Kecha</p>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Yopilgan</span>
             </div>
             <div class="px-6">
-              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
-              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ yesterday_all_sales }} UZS</p>
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
+              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ yesterday_all_sales }} so'm</p>
             </div>
             <div class="dash-divider my-4 mx-6"></div>
             <div class="px-6 grid grid-cols-2 gap-4">
-              
+
               <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
-                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ yesterday_profit }} UZS</p>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
+                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ yesterday_profit }} so'm</p>
               </div>
               <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
-                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ yesterday_expenses }} UZS</p>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
+                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ yesterday_expenses }} so'm</p>
               </div>
             </div>
           </div>
@@ -161,60 +164,60 @@
           <!-- 7 Days -->
           <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
             <div class="px-6 flex items-center justify-between mb-4">
-              <p class="font-display text-sm font-semibold text-ink-900">7 Days</p>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Weekly</span>
+              <p class="font-display text-sm font-semibold text-ink-900">7 kun</p>
+              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Haftalik</span>
             </div>
             <div class="px-6">
-              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
-              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ days_7_all_sales }} UZS</p>
+              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
+              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ days_7_all_sales }} so'm</p>
             </div>
             <div class="dash-divider my-4 mx-6"></div>
             <div class="px-6 grid grid-cols-2 gap-4">
               <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
-                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ days_7_profit }} UZS</p>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
+                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ days_7_profit }} so'm</p>
               </div>
               <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
-                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ days_7_expenses }} UZS</p>
+                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
+                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ days_7_expenses }} so'm</p>
               </div>
-              
+
             </div>
           </div>
 
           <!-- Monthly, now with prev/next month navigation -->
 <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
 <div class="px-6 flex items-center justify-between mb-4">
-  <p class="font-display text-sm font-semibold text-ink-900">Monthly</p>
+  <p class="font-display text-sm font-semibold text-ink-900">Oylik</p>
   <div class="flex items-center justify-between w-40 shrink-0">
     <a href="{% url 'dashboard' %}?month={{ prev_month_param }}"
        class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 active:bg-paper-200 transition"
-       aria-label="Previous month">‹</a>
+       aria-label="Oldingi oy">‹</a>
 
     <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5 text-center truncate">{{ month_name }}</span>
 
     {% if next_month_param %}
     <a href="{% url 'dashboard' %}?month={{ next_month_param }}"
        class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 active:bg-paper-200 transition"
-       aria-label="Next month">›</a>
+       aria-label="Keyingi oy">›</a>
     {% else %}
     <span class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/15 cursor-not-allowed" aria-hidden="true">›</span>
     {% endif %}
   </div>
 </div>
   <div class="px-6">
-    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
-    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ month_all_sales }} UZS</p>
+    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
+    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ month_all_sales }} so'm</p>
   </div>
   <div class="dash-divider my-4 mx-6"></div>
   <div class="px-6 grid grid-cols-2 gap-4">
     <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
-      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ month_profit }} UZS</p>
+      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
+      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ month_profit }} so'm</p>
     </div>
     <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
-      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ month_expenses }} UZS</p>
+      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
+      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ month_expenses }} so'm</p>
     </div>
   </div>
 </div>
@@ -235,28 +238,28 @@
       </label>
     </div>
     <button type="submit"
-      class="w-full text-xs font-semibold px-3 py-1.5 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Apply</button>
+      class="w-full text-xs font-semibold px-3 py-1.5 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Qo'llash</button>
   </form>
 
   {% if custom_range_active %}
   <div class="px-6">
-    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sales</p>
-    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ custom_sales }} UZS</p>
+    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
+    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ custom_sales }} so'm</p>
   </div>
   <div class="dash-divider my-4 mx-6"></div>
   <div class="px-6 grid grid-cols-2 gap-4">
     <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit</p>
-      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ custom_profit }} UZS</p>
+      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
+      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ custom_profit }} so'm</p>
     </div>
     <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Expenses</p>
-      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ custom_expenses }} UZS</p>
+      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
+      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ custom_expenses }} so'm</p>
     </div>
   </div>
   {% else %}
   <div class="px-6">
-    <p class="text-xs text-ink-900/35">Select a date range and press Apply to see totals.</p>
+    <p class="text-xs text-ink-900/35">Sana oralig'ini tanlang va jami ko'rish uchun "Qo'llash" tugmasini bosing.</p>
   </div>
   {% endif %}
 </div>
@@ -270,8 +273,8 @@
         <!-- Sales by hour -->
 <div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6 relative">
   <div class="flex items-baseline justify-between mb-5">
-    <p class="text-sm font-semibold text-ink-900">Sales by hour</p>
-    <p id="chart-peak-info" class="text-xs font-mono text-ink-900/40">Peak -- · $0</p>
+    <p class="text-sm font-semibold text-ink-900">Soatlik savdo</p>
+    <p id="chart-peak-info" class="text-xs font-mono text-ink-900/40">Eng yuqori -- · 0 so'm</p>
   </div>
 
   <div id="chart-bars-container" class="flex items-end gap-2 h-40 relative"></div>
@@ -280,13 +283,13 @@
 </div>
         <!-- Category mix -->
           <div class="bg-white border border-paper-200 rounded-2xl p-6">
-  <p class="text-sm font-semibold text-ink-900 mb-4">Top sellers today</p>
+  <p class="text-sm font-semibold text-ink-900 mb-4">Bugungi eng ko'p sotilganlar</p>
 
   <div id="top-sellers-container" class="space-y-3"></div>
 </div>
       </div>
 
-      
+
 
   </div>
 </div>
@@ -294,8 +297,8 @@
 <script>
   function updateClock() {
     const now = new Date();
-    document.getElementById('clock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('todayDate').textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    document.getElementById('clock').textContent = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('todayDate').textContent = now.toLocaleDateString('uz-UZ', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   }
   updateClock();
   setInterval(updateClock, 1000);
@@ -331,7 +334,7 @@
       }).format(num);
 
       // Append your currency code explicitly
-      return `${formattedNumber} UZS`;
+      return `${formattedNumber} so'm`;
     };
 
     let maxVal = 0;
@@ -345,9 +348,9 @@
     });
 
     if (maxVal > 0) {
-      peakInfo.textContent = `Peak ${format24HourLabel(peakHour24)} · ${formatCurrency(maxVal)}`;
+      peakInfo.textContent = `Eng yuqori ${format24HourLabel(peakHour24)} · ${formatCurrency(maxVal)}`;
     } else {
-      peakInfo.textContent = `No sales data today`;
+      peakInfo.textContent = `Bugun savdo ma'lumotlari yo'q`;
     }
 
     let htmlContent = '';
@@ -413,7 +416,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('top-sellers-container');
     if (!sellersData || sellersData.length === 0) {
-      container.innerHTML = `<p class="text-xs font-mono text-ink-900/40">No sales records available today.</p>`;
+      container.innerHTML = `<p class="text-xs font-mono text-ink-900/40">Bugun uchun savdo yozuvlari mavjud emas.</p>`;
       return;
     }
 
@@ -425,7 +428,7 @@
       const formattedNumber = new Intl.NumberFormat('en-US', {
         maximumFractionDigits: 0
       }).format(num);
-      return `${formattedNumber} UZS`;
+      return `${formattedNumber} so'm`;
     };
 
     // 3. Find the maximum value to scale relative bar widths (100% baseline)

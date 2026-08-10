@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 {% load humanize %}
 {% load static %}
-<html lang="en">
+<html lang="uz">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karavan Market — Expenses</title>
+<title>Karavan Market — Xarajatlar</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="{% static 'css/output.css' %}">
+<link rel="manifest" href="{% url 'manifest' %}">
+<meta name="theme-color" content="#1a1a2e">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register("{% url 'service_worker' %}");
+}
+</script>
 
 <style>
   html { scroll-behavior: smooth; }
@@ -40,6 +47,17 @@
   .cat-logistics { background-color: #4A7C59; }
   .cat-other     { background-color: #8A8677; }
 
+  .sort-btn { display: inline-flex; align-items: center; gap: 0.25rem; cursor: pointer; user-select: none; }
+  .sort-btn:hover { color: #0F211D; }
+  .sort-arrow { font-size: 0.6rem; opacity: 0.25; }
+  .sort-btn[data-active="true"] .sort-arrow { opacity: 1; color: #FCAB10; }
+
+  .page-btn[data-active="true"] {
+    background-color: #16302A;
+    color: #F6F5F0;
+    border-color: #16302A;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
   }
@@ -58,10 +76,10 @@
     </div>
 
     <nav class="flex flex-col gap-1">
-      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
-      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Point of Sale</a>
-      <a href="{% url 'products' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Products</a>
-      <a href="{% url 'expenses' %}" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Expenses</a>
+      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Boshqaruv paneli</a>
+      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Kassa </a>
+      <a href="{% url 'products' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Mahsulotlar</a>
+      <a href="{% url 'expenses' %}" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Xarajatlar</a>
     </nav>
 
   </aside>
@@ -73,41 +91,42 @@
     <header class="px-8 pt-6 pb-4 shrink-0">
       <div class="flex items-start justify-between gap-6 flex-wrap">
         <div>
-          <h1 class="font-display text-2xl font-semibold text-ink-900">Expenses</h1>
+          <h1 class="font-display text-2xl font-semibold text-ink-900">Xarajatlar</h1>
           <p class="text-sm text-ink-900/50 mt-0.5">{{ today }}</p>
         </div>
         <button type="button" onclick="document.getElementById('addExpenseModal').classList.remove('hidden')"
           class="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">
-          <span class="text-base leading-none">+</span> Add Expense
+          <span class="text-base leading-none">+</span> Xarajat qo'shish
         </button>
+        
       </div>
     </header>
 
     <!-- Scrollable content -->
     <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6">
-
+      
       <!-- Summary cards -->
       <div>
         <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
 
           <div class="bg-white border border-paper-200 rounded-2xl p-5">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Today</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{todays_expenses | intcomma}} UZS</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Bugun</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{todays_expenses | intcomma}} so'm</p>
           </div>
 
           <div class="bg-white border border-paper-200 rounded-2xl p-5">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">7 Days</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{weekly_expenses | intcomma}} UZS</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">7 kun</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{weekly_expenses | intcomma}} so'm</p>
           </div>
 
           <div class="bg-white border border-paper-200 rounded-2xl p-5">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Month</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{month_expenses | intcomma}} UZS</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Oy</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{month_expenses | intcomma}} so'm</p>
           </div>
 
           <div class="bg-white border border-paper-200 rounded-2xl p-5">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">{{ category_most_expenses.reason__name }}</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{category_most_expenses.total | intcomma}} UZS</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">{{ category_most_expenses.category__name }}</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{category_most_expenses.total | intcomma}} so'm</p>
           </div>
 
         </div>
@@ -115,92 +134,110 @@
 
       <!-- Filter bar -->
       <div class="bg-white border border-paper-200 rounded-2xl p-5">
-        <form method="GET" action="{% url 'expenses' %}" class="flex flex-wrap items-end gap-4">
+        <form method="GET" action="{% url 'expenses' %}" class="flex flex-wrap items-end gap-4">{% csrf_token %}
           <label class="flex flex-col gap-1">
-            <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Start date</span>
+            <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Boshlanish sanasi</span>
             <input type="date" name="start_date" value="{{ request.GET.start_date }}"
               class="text-sm font-mono px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">End date</span>
+            <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Tugash sanasi</span>
             <input type="date" name="end_date" value="{{ request.GET.end_date }}"
               class="text-sm font-mono px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Category</span>
+            <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Kategoriya</span>
             <select name="category"
               class="text-sm px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500 min-w-[9rem]">
-              <option value="">All categories</option>
+              <option value="">Barcha kategoriyalar</option>
               {% for cat in categories %}
-              <option value="{{ cat.name }}" {% if request.GET.category == cat.name %}selected{% endif %}>{{ cat.name }}</option>
+              <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
               {% endfor %}
             </select>
           </label>
           <div class="flex gap-2">
             <button type="submit"
-              class="text-sm font-semibold px-4 py-2 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Apply</button>
+              class="text-sm font-semibold px-4 py-2 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Qo'llash</button>
             <a href="{% url 'expenses' %}"
-              class="text-sm font-semibold px-4 py-2 rounded-lg border border-paper-200 text-ink-900/50 hover:text-ink-900 hover:bg-paper-50 transition">Reset</a>
+              class="text-sm font-semibold px-4 py-2 rounded-lg border border-paper-200 text-ink-900/50 hover:text-ink-900 hover:bg-paper-50 transition">Tozalash</a>
           </div>
         </form>
       </div>
 
-
       <!-- Expenses table -->
       <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
+
+        <!-- Search -->
+        <div class="px-6 py-4 border-b border-paper-200 flex items-center gap-3 flex-wrap">
+          <input id="searchInput" type="text" placeholder="Tavsif yoki kategoriya bo'yicha qidiring…"
+            class="w-full max-w-xs px-4 py-2.5 rounded-xl bg-paper-50 border border-paper-200 text-sm placeholder:text-ink-900/35 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+          <p id="resultsSummary" class="text-xs text-ink-900/40 font-mono"></p>
+        </div>
+
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-paper-200">
-                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Date</th>
-                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Amount</th>
-
-                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Category</th>
-                <!-- <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Description</th> -->
-                <th class="text-right px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Actions</th>
+                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                  <span class="sort-btn" data-sort-key="date" onclick="setSort('date')">Sana <span class="sort-arrow">▲</span></span>
+                </th>
+                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                  <span class="sort-btn" data-sort-key="amount" onclick="setSort('amount')">Summa <span class="sort-arrow">▲</span></span>
+                </th>
+                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                  <span class="sort-btn" data-sort-key="category" onclick="setSort('category')">Kategoriya <span class="sort-arrow">▲</span></span>
+                </th>
+                <th class="text-left px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">
+                  <span class="sort-btn" data-sort-key="note" onclick="setSort('note')">Tavsif <span class="sort-arrow">▲</span></span>
+                </th>
+                <th class="text-right px-6 py-3 text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Amallar</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="expensesBody">
               {% for expense in expenses %}
-              <tr class="border-b border-paper-100 last:border-b-0 hover:bg-paper-50/60 transition">
+              <tr class="expense-row border-b border-paper-100 last:border-b-0 hover:bg-paper-50/60 transition"
+                  data-date="{{ expense.created_at|date:'Y-m-d' }}"
+                  data-date-display="{{ expense.created_at|date:'d M Y' }}"
+                  data-amount="{{ expense.expense }}"
+                  data-category="{{ expense.category }}"
+                  data-note="{{ expense.note|default:'' }}">
                 <td class="px-6 py-3.5 font-mono text-xs text-ink-900/60 whitespace-nowrap">{{ expense.created_at|date:"d M Y" }}</td>
-                <td class="px-6 py-3.5 text-left font-mono font-semibold text-rust-500">{{ expense.expense|intcomma }} UZS</td>
+                <td class="px-6 py-3.5 text-left font-mono font-semibold text-rust-500">{{ expense.expense|intcomma }} so'm</td>
 
                 <td class="px-6 py-3.5 text-left">
                   <span class="inline-flex items-center gap-2 text-xs font-semibold text-ink-900/70">
-                    <span class="cat-dot cat-{{ expense.category|lower }}"></span>{{ expense.reason }}
+                    <span class="cat-dot cat-{{ expense.category|lower }}"></span>{{ expense.category }}
                   </span>
                 </td>
-                <!-- <td class="px-6 py-3.5 text-ink-900/70">{{ expense.description|default:"—" }}</td> -->
+                <td class="px-6 py-3.5 text-ink-900/70">{{ expense.note|default:"—" }}</td>
                 <td class="px-6 py-3.5 text-right">
-                  <form method="POST" action="" class="inline" onsubmit="return confirm('Delete this expense?');">
+                  <form method="POST" action="" class="inline" onsubmit="return confirm('Ushbu xarajat o\'chirilsinmi?');">
                     {% csrf_token %}
-                    <button type="submit" class="text-xs font-semibold text-ink-900/30 hover:text-rust-500 transition">Delete</button>
+                    <button type="submit" class="text-xs font-semibold text-ink-900/30 hover:text-rust-500 transition">O'chirish</button>
                   </form>
                 </td>
               </tr>
-              {% empty %}
-              <tr>
-                <td colspan="5" class="px-6 py-10 text-center text-sm text-ink-900/35">No expenses match this filter. Try widening the date range.</td>
-              </tr>
               {% endfor %}
+
+              <tr id="noResultsRow" class="hidden">
+                <td colspan="5" class="px-6 py-10 text-center text-sm text-ink-900/35">Ushbu filtrga mos xarajatlar topilmadi. Sana oralig'ini kengaytirib ko'ring.</td>
+              </tr>
             </tbody>
           </table>
         </div>
 
-        {% if expenses.has_other_pages %}
-        <div class="px-6 py-3 border-t border-paper-200 flex items-center justify-between">
-          <p class="text-xs font-mono text-ink-900/40">Page {{ expenses.number }} of {{ expenses.paginator.num_pages }}</p>
-          <div class="flex gap-2">
-            {% if expenses.has_previous %}
-            <a href="?page={{ expenses.previous_page_number }}" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-paper-200 text-ink-900/50 hover:text-ink-900 hover:bg-paper-50 transition">Previous</a>
-            {% endif %}
-            {% if expenses.has_next %}
-            <a href="?page={{ expenses.next_page_number }}" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-paper-200 text-ink-900/50 hover:text-ink-900 hover:bg-paper-50 transition">Next</a>
-            {% endif %}
+        <!-- Pagination -->
+        <div id="paginationBar" class="px-6 py-3 border-t border-paper-200 flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-2 text-xs text-ink-900/40">
+            <span>Sahifadagi qatorlar</span>
+            <select id="pageSizeSelect" class="font-mono text-xs bg-white border border-paper-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-brand-500">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
           </div>
+          <div id="pageButtons" class="flex items-center gap-1"></div>
         </div>
-        {% endif %}
       </div>
 
     </div>
@@ -213,7 +250,7 @@
 
   <div class="relative bg-white border border-paper-200 rounded-2xl w-full max-w-md p-6">
     <div class="flex items-center justify-between mb-5">
-      <p class="font-display text-lg font-semibold text-ink-900">Add Expense</p>
+      <p class="font-display text-lg font-semibold text-ink-900">Xarajat qo'shish</p>
       <button type="button" onclick="document.getElementById('addExpenseModal').classList.add('hidden')"
         class="text-ink-900/30 hover:text-ink-900 transition text-lg leading-none">&times;</button>
     </div>
@@ -222,13 +259,13 @@
       {% csrf_token %}
 
       <label class="flex flex-col gap-1">
-        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Date</span>
+        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sana</span>
         <input type="date" name="date" value="{% now 'Y-m-d' %}" required
           class="text-sm font-mono px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
       </label>
 
       <label class="flex flex-col gap-1">
-        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Category</span>
+        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Kategoriya</span>
         <select name="category" required
           class="text-sm px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
           {% for cat in categories %}
@@ -238,22 +275,22 @@
       </label>
 
       <label class="flex flex-col gap-1">
-        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Amount (UZS)</span>
+        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Summa (so'm)</span>
         <input type="number" name="amount" min="0" step="1" required placeholder="0"
           class="text-sm font-mono px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
       </label>
 
       <label class="flex flex-col gap-1">
-        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Description <span class="normal-case font-normal text-ink-900/30">(optional)</span></span>
-        <input type="text" name="description" placeholder="e.g. October storefront rent"
+        <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Tavsif <span class="normal-case font-normal text-ink-900/30">(ixtiyoriy)</span></span>
+        <input type="text" name="note" placeholder="masalan, Oktyabr oyi uchun do'kon ijarasi"
           class="text-sm px-3 py-2 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
       </label>
 
       <div class="dash-divider pt-4 flex gap-2 justify-end">
         <button type="button" onclick="document.getElementById('addExpenseModal').classList.add('hidden')"
-          class="text-sm font-semibold px-4 py-2 rounded-lg border border-paper-200 text-ink-900/50 hover:text-ink-900 hover:bg-paper-50 transition">Cancel</button>
+          class="text-sm font-semibold px-4 py-2 rounded-lg border border-paper-200 text-ink-900/50 hover:text-ink-900 hover:bg-paper-50 transition">Bekor qilish</button>
         <button type="submit"
-          class="text-sm font-semibold px-4 py-2 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Save Expense</button>
+          class="text-sm font-semibold px-4 py-2 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Xarajatni saqlash</button>
       </div>
     </form>
   </div>
@@ -273,33 +310,174 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('category-bars-container');
-    if (!categoryData || categoryData.length === 0) {
-      container.innerHTML = `<p class="text-xs font-mono text-ink-900/40">No expenses recorded in this range.</p>`;
-      return;
+    if (container) {
+      if (!categoryData || categoryData.length === 0) {
+        container.innerHTML = `<p class="text-xs font-mono text-ink-900/40">Ushbu oraliqda xarajatlar qayd etilmagan.</p>`;
+      } else {
+        categoryData.sort((a, b) => b.total - a.total);
+        const maxVal = categoryData[0].total;
+        const formatCurrency = (num) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num)} so'm`;
+
+        let html = '';
+        categoryData.forEach((item) => {
+          const pct = maxVal > 0 ? (item.total / maxVal) * 100 : 0;
+          html += `
+            <div class="flex items-center gap-3">
+              <span class="cat-dot cat-${item.key} shrink-0"></span>
+              <span class="text-sm text-ink-900 w-24 shrink-0 truncate" title="${item.name}">${item.name}</span>
+              <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden">
+                <div class="h-full bg-ink-900 transition-all duration-500" style="width: ${pct}%"></div>
+              </div>
+              <span class="font-mono text-sm text-ink-900/60 w-28 text-right shrink-0">${formatCurrency(item.total)}</span>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+    }
+  });
+
+  // ============ Expenses table: search, sort, paginate (same pattern as Products) ============
+  const expensesBody = document.getElementById('expensesBody');
+  const noResultsRow = document.getElementById('noResultsRow');
+  const searchInputExpenses = document.getElementById('searchInput');
+  const resultsSummaryExpenses = document.getElementById('resultsSummary');
+  const pageSizeSelectExpenses = document.getElementById('pageSizeSelect');
+  const pageButtonsExpenses = document.getElementById('pageButtons');
+
+  const allExpenseRows = Array.from(expensesBody.querySelectorAll('.expense-row'));
+
+  const expenseColumnType = {
+    date: 'string',      // data-date is ISO (YYYY-MM-DD) so string sort == chronological
+    amount: 'number',
+    category: 'string',
+    note: 'string',
+  };
+
+  let expSortKey = 'date';
+  let expSortDir = -1; // newest first by default
+  let expSearchTerm = '';
+  let expCurrentPage = 1;
+  let expPageSize = 10;
+
+  function setSort(key) {
+    if (expSortKey === key) {
+      expSortDir *= -1;
+    } else {
+      expSortKey = key;
+      expSortDir = 1;
+    }
+    expCurrentPage = 1;
+    renderExpenses();
+  }
+
+  function compareExpenseRows(a, b) {
+    const type = expenseColumnType[expSortKey];
+    let av = a.dataset[expSortKey];
+    let bv = b.dataset[expSortKey];
+
+    if (type === 'number') {
+      av = parseFloat(av) || 0;
+      bv = parseFloat(bv) || 0;
+      return (av - bv) * expSortDir;
     }
 
-    categoryData.sort((a, b) => b.total - a.total);
-    const maxVal = categoryData[0].total;
+    av = (av || '').toLowerCase();
+    bv = (bv || '').toLowerCase();
+    if (av < bv) return -1 * expSortDir;
+    if (av > bv) return 1 * expSortDir;
+    return 0;
+  }
 
-    const formatCurrency = (num) => `${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num)} UZS`;
+  function matchesExpenseSearch(row) {
+    if (!expSearchTerm) return true;
+    const note = (row.dataset.note || '').toLowerCase();
+    const category = (row.dataset.category || '').toLowerCase();
+    return note.includes(expSearchTerm) || category.includes(expSearchTerm);
+  }
 
-    let html = '';
-    categoryData.forEach((item) => {
-      const pct = maxVal > 0 ? (item.total / maxVal) * 100 : 0;
-      html += `
-        <div class="flex items-center gap-3">
-          <span class="cat-dot cat-${item.key} shrink-0"></span>
-          <span class="text-sm text-ink-900 w-24 shrink-0 truncate" title="${item.name}">${item.name}</span>
-          <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden">
-            <div class="h-full bg-ink-900 transition-all duration-500" style="width: ${pct}%"></div>
-          </div>
-          <span class="font-mono text-sm text-ink-900/60 w-28 text-right shrink-0">${formatCurrency(item.total)}</span>
-        </div>
-      `;
+  function renderExpenses() {
+    if (allExpenseRows.length === 0) return;
+
+    const sorted = [...allExpenseRows].sort(compareExpenseRows);
+    sorted.forEach(row => expensesBody.insertBefore(row, noResultsRow));
+
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      const active = btn.dataset.sortKey === expSortKey;
+      btn.dataset.active = active;
+      btn.querySelector('.sort-arrow').textContent = (active && expSortDir === -1) ? '▼' : '▲';
     });
 
-    container.innerHTML = html;
-  });
+    const filtered = sorted.filter(matchesExpenseSearch);
+    noResultsRow.classList.toggle('hidden', filtered.length !== 0);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / expPageSize));
+    if (expCurrentPage > totalPages) expCurrentPage = totalPages;
+
+    const start = (expCurrentPage - 1) * expPageSize;
+    const end = start + expPageSize;
+
+    allExpenseRows.forEach(row => { row.classList.add('hidden'); });
+    filtered.forEach((row, i) => {
+      row.classList.toggle('hidden', !(i >= start && i < end));
+    });
+
+    if (filtered.length === 0) {
+      resultsSummaryExpenses.textContent = "0 ta natija";
+    } else {
+      resultsSummaryExpenses.textContent = `${start + 1}–${Math.min(end, filtered.length)} / jami ${filtered.length}`;
+    }
+
+    renderExpensePagination(totalPages);
+  }
+
+  function renderExpensePagination(totalPages) {
+    pageButtonsExpenses.innerHTML = '';
+
+    const makeBtn = (label, page, opts = {}) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.className = 'page-btn text-xs font-mono px-2.5 py-1.5 rounded-lg border border-paper-200 bg-white text-ink-900/60 hover:border-ink-900/30 transition disabled:opacity-30 disabled:pointer-events-none';
+      btn.disabled = !!opts.disabled;
+      if (opts.active) btn.dataset.active = 'true';
+      btn.onclick = () => { expCurrentPage = page; renderExpenses(); };
+      return btn;
+    };
+
+    pageButtonsExpenses.appendChild(makeBtn('‹ Oldingi', expCurrentPage - 1, { disabled: expCurrentPage === 1 }));
+
+    for (let p = 1; p <= totalPages; p++) {
+      if (p === 1 || p === totalPages || Math.abs(p - expCurrentPage) <= 1) {
+        pageButtonsExpenses.appendChild(makeBtn(String(p), p, { active: p === expCurrentPage }));
+      } else if (Math.abs(p - expCurrentPage) === 2) {
+        const span = document.createElement('span');
+        span.textContent = '…';
+        span.className = 'text-xs text-ink-900/30 px-1';
+        pageButtonsExpenses.appendChild(span);
+      }
+    }
+
+    pageButtonsExpenses.appendChild(makeBtn('Keyingi ›', expCurrentPage + 1, { disabled: expCurrentPage === totalPages }));
+  }
+
+  if (searchInputExpenses) {
+    searchInputExpenses.addEventListener('input', e => {
+      expSearchTerm = e.target.value.trim().toLowerCase();
+      expCurrentPage = 1;
+      renderExpenses();
+    });
+  }
+
+  if (pageSizeSelectExpenses) {
+    pageSizeSelectExpenses.addEventListener('change', e => {
+      expPageSize = parseInt(e.target.value, 10);
+      expCurrentPage = 1;
+      renderExpenses();
+    });
+  }
+
+  renderExpenses();
 </script>
 
 </body>

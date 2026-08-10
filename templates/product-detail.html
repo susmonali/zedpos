@@ -1,17 +1,23 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uz">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karavan Market — Whole Milk 1L</title>
+<title>Karavan Market — To'liq yog'li sut 1L</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="{% static 'css/output.css' %}">
-
+<link rel="manifest" href="{% url 'manifest' %}">
+<meta name="theme-color" content="#1a1a2e">
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register("{% url 'service_worker' %}");
+}
+</script>
 
 <style>
   html { scroll-behavior: smooth; }
@@ -47,10 +53,10 @@
     </div>
 
     <nav class="flex flex-col gap-1">
-      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Dashboard</a>
-      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Point of Sale</a>
-      <a href="{% url 'products' %}" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Products</a>
-      <a href="{% url 'expenses' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Expenses</a>
+      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Boshqaruv paneli</a>
+      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Kassa</a>
+      <a href="{% url 'products' %}" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Mahsulotlar</a>
+      <a href="{% url 'expenses' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Xarajatlar</a>
     </nav>
 
   </aside>
@@ -60,7 +66,7 @@
 
     <!-- Top bar -->
     <header class="px-8 pt-6 pb-4 shrink-0">
-      <a href="{% url 'products' %}" class="text-sm text-ink-900/50 hover:text-ink-900 transition">← Products</a>
+      <a href="{% url 'products' %}" class="text-sm text-ink-900/50 hover:text-ink-900 transition">← Mahsulotlar</a>
       <div class="flex items-start justify-between gap-6 flex-wrap mt-1">
         <div>
           <div class="flex items-center gap-3">
@@ -68,14 +74,14 @@
             <!-- <span id="statusBadge" class="text-xs font-medium px-2 py-1 rounded-full bg-rust-500/10 text-rust-500">Low stock</span> -->
           </div>
           <p class="text-sm text-ink-900/50 mt-0.5 flex items-center gap-2">
-            <span class="font-mono">Barcode: {{ product.barcode }}</span>
+            <span class="font-mono">Shtrix-kod: {{ product.barcode }}</span>
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <button type="button" onclick="openReceiveModal()" class="px-4 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">+ Receive stock</button>
+          <button type="button" onclick="openReceiveModal()" class="px-4 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">+ Zaxira qabul qilish</button>
           <!-- <a href="#" class="px-4 py-2.5 rounded-xl border border-paper-200 bg-white text-sm font-medium text-ink-900/70 hover:bg-paper-50 transition">Edit</a> -->
-          <button type="button" onclick="openArchiveModal()" class="px-4 py-2.5 rounded-xl border border-paper-200 bg-white text-sm font-medium text-ink-900/70 hover:bg-paper-50 transition">{% if product.active %}Archive{% else %}Unarchive{% endif %}</button>
-          <button type="button" onclick="openDeleteModal()" class="px-4 py-2.5 rounded-xl border border-rust-500/30 text-sm font-medium text-rust-500 hover:bg-rust-500/5 transition">Delete</button>
+          <button type="button" onclick="openArchiveModal()" class="px-4 py-2.5 rounded-xl border border-paper-200 bg-white text-sm font-medium text-ink-900/70 hover:bg-paper-50 transition">{% if product.active %}Arxivlash{% else %}Arxivdan chiqarish{% endif %}</button>
+          <button type="button" onclick="openDeleteModal()" class="px-4 py-2.5 rounded-xl border border-rust-500/30 text-sm font-medium text-rust-500 hover:bg-rust-500/5 transition">O'chirish</button>
         </div>
       </div>
     </header>
@@ -84,14 +90,14 @@
     <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               <div class="bg-white border border-paper-200 rounded-2xl p-6">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Pricing</p>
-          <p class="font-mono text-3xl font-bold text-ink-900">{{ product.sales_price }} UZS</p>
-          <p class="text-sm text-ink-900/50 mt-1">Priced per {% if product.weight_based %} kg{% else %} unit{% endif %}</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Narx</p>
+          <p class="font-mono text-3xl font-bold text-ink-900">{{ product.sales_price }} so'm</p>
+          <p class="text-sm text-ink-900/50 mt-1">{% if product.weight_based %}Kg uchun narx{% else %}Dona uchun narx{% endif %}</p>
         </div>
         <div class="bg-white border border-paper-200 rounded-2xl p-6">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Vendor Cost</p>
-          <p class="font-mono text-3xl font-bold text-ink-900">{{ product.vendor_cost }} UZS</p>
-          <p class="text-sm text-ink-900/50 mt-1">Priced per {% if product.weight_based %} kg{% else %} unit{% endif %}</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-4">Tannarxi</p>
+          <p class="font-mono text-3xl font-bold text-ink-900">{{ product.vendor_cost }} so'm</p>
+          <p class="text-sm text-ink-900/50 mt-1">{% if product.weight_based %}Kg uchun narx{% else %}Dona uchun narx{% endif %}</p>
         </div>
         </div>
       <!-- Key info + stock -->
@@ -122,16 +128,16 @@
       <!-- Sales performance -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div class="bg-white border border-paper-200 rounded-2xl px-5 py-4">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Available</p>
-          <p class="font-mono text-xl font-bold text-ink-900 mt-1">{% if product.weight_based %}{{ product.qty }} kg{% else %}{{ product.qty | floatformat }} units{% endif %}</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Mavjud</p>
+          <p class="font-mono text-xl font-bold text-ink-900 mt-1">{% if product.weight_based %}{{ product.qty }} kg{% else %}{{ product.qty | floatformat }} dona{% endif %}</p>
         </div>
         <div class="bg-white border border-paper-200 rounded-2xl px-5 py-4">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sold this week</p>
-          <p class="font-mono text-xl font-bold text-ink-900 mt-1">{% if product.weight_based %}{{ sold_this_week }} kg{% else %}{{ sold_this_week | floatformat }} units{% endif %}</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Shu hafta sotilgan</p>
+          <p class="font-mono text-xl font-bold text-ink-900 mt-1">{% if product.weight_based %}{{ sold_this_week }} kg{% else %}{{ sold_this_week | floatformat }} dona{% endif %}</p>
         </div>
         <div class="bg-white border border-paper-200 rounded-2xl px-5 py-4">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Profit this week</p>
-          <p class="font-mono text-xl font-bold text-ink-900 mt-1">{{ days_7_profit | floatformat }} UZS</p>
+          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Shu haftalik foyda</p>
+          <p class="font-mono text-xl font-bold text-ink-900 mt-1">{{ days_7_profit | floatformat }} so'm</p>
         </div>
       </div>
 
@@ -141,20 +147,20 @@
         <!-- Stock activity ledger (sales) -->
         <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
           <div class="px-6 py-3 border-b border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Stock activity</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Sotuv tarixi</p>
           </div>
           <div id="stockActivityList" class="divide-y divide-paper-200">
             {% for item in sale_history %}
             <div class="px-6 py-3.5 flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-ink-900">Sale #{{item.sale.id}}</p>
+                <p class="text-sm font-medium text-ink-900">Savdo #{{item.sale.id}}</p>
                 <p class="text-xs text-ink-900/40 mt-0.5">{{ item.sale.created_at }}</p>
               </div>
               <span class="font-mono text-sm font-semibold text-rust-500">−{% if item.product.weight_based %}{{ item.qty }} kg{% else %}{{ item.qty | floatformat }}{% endif %}</span>
             </div>
             {% empty %}
             <div class="px-6 py-8 text-center">
-              <p class="text-sm text-ink-900/40">No sales recorded yet.</p>
+              <p class="text-sm text-ink-900/40">Hozircha savdolar qayd etilmagan.</p>
             </div>
             {% endfor %}
           </div>
@@ -163,20 +169,20 @@
         <!-- Restock history -->
         <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
           <div class="px-6 py-3 border-b border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Restock history</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Zaxira to'ldirish tarixi</p>
           </div>
           <div id="restockHistoryList" class="divide-y divide-paper-200">
             {% for item in restock_history %}
             <div class="px-6 py-3.5 flex items-center justify-between">
               <div>
-                <p class="text-sm font-medium text-ink-900">{{ item.reference|default:"Manual adjustment" }}</p>
-                <p class="text-xs text-ink-900/40 mt-0.5">{{ item.created_at }}{% if item.paid %} · {{ item.paid | floatformat }} UZS paid{% endif %}</p>
+                <p class="text-sm font-medium text-ink-900">{{ item.reference|default:"Qo'lda o'zgartirish" }}</p>
+                <p class="text-xs text-ink-900/40 mt-0.5">{{ item.created_at }}{% if item.paid %} · {{ item.paid | floatformat }} so'm to'landi{% endif %}</p>
               </div>
               <span class="font-mono text-sm font-semibold text-pine-600">+{% if item.product.weight_based %}{{ item.qty }} kg{% else %}{{ item.qty | floatformat }}{% endif %}</span>
             </div>
             {% empty %}
             <div class="px-6 py-8 text-center">
-              <p class="text-sm text-ink-900/40">No restocks recorded yet.</p>
+              <p class="text-sm text-ink-900/40">Hozircha zaxira to'ldirishlar qayd etilmagan.</p>
             </div>
             {% endfor %}
           </div>
@@ -193,34 +199,24 @@
   <div id="receiveModal" data-show="false" class="fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200">
   <div onclick="closeReceiveModal()" class="absolute inset-0 bg-ink-900/40"></div>
   <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
-    <p class="font-display font-semibold text-ink-900">Receive stock</p>
-    <p class="text-xs text-ink-900/50 mt-0.5">{{ product.name }} · currently <span id="rmCurrentStock">{{ product.qty }}</span> {% if product.weight_based %}kg{% else %}units{% endif %}</p>
+    <p class="font-display font-semibold text-ink-900">Zaxira qabul qilish</p>
+    <p class="text-xs text-ink-900/50 mt-0.5">{{ product.name }} · hozirda <span id="rmCurrentStock">{{ product.qty }}</span> {% if product.weight_based %}kg{% else %}dona{% endif %}</p>
 
     <label class="block mt-5">
-      <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Quantity received</span>
-      <input id="rmQtyInput" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 25"
+      <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Qabul qilingan miqdor</span>
+      <input id="rmQtyInput" name="qty" type="number" min="1" step="1" inputmode="numeric" placeholder="masalan, 25"
         class="mt-1 w-full px-3 py-2.5 rounded-lg bg-paper-50 border border-paper-200 font-mono text-base focus:outline-none focus:ring-2 focus:ring-brand-500">
-    </label>
-    <label class="block mt-5">
-      <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Paid</span>
-      <input id="rmPaidInput" name="paid" type="number" min="1" step="1" inputmode="numeric" placeholder="e.g. 1,000,000"
-        class="mt-1 w-full px-3 py-2.5 rounded-lg bg-paper-50 border border-paper-200 font-mono text-base focus:outline-none focus:ring-2 focus:ring-brand-500">
-    </label>
-    <label class="block mt-3">
-      <span class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Reference (optional)</span>
-      <input id="rmRefInput" name="reference" type="text" placeholder="e.g. Dairy Farms Co. delivery"
-        class="mt-1 w-full px-3 py-2.5 rounded-lg bg-paper-50 border border-paper-200 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
     </label>
 
     <div class="mt-4 px-4 py-3 rounded-xl bg-paper-50 border border-paper-200 flex items-center justify-between">
-      <span class="text-sm text-ink-900/60">New stock total</span>
-      <span id="rmNewTotal" class="font-mono text-lg font-bold text-ink-900">{{ product.qty }} {% if product.weight_based %}kg{% else %}units{% endif %}</span>
+      <span class="text-sm text-ink-900/60">Yangi zaxira jami</span>
+      <span id="rmNewTotal" class="font-mono text-lg font-bold text-ink-900">{{ product.qty }} {% if product.weight_based %}kg{% else %}dona{% endif %}</span>
     </div>
 
     <div class="flex gap-3 mt-6">
-  <button type="button" onclick="closeReceiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
-  
-  <button type="submit" class="flex-1 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">Add to stock</button>
+  <button type="button" onclick="closeReceiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Bekor qilish</button>
+
+  <button type="submit" class="flex-1 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">Zaxiraga qo'shish</button>
 </div>
   </div>
 </div>
@@ -238,14 +234,14 @@
       </svg>
     </div>
 
-    <p class="font-display font-semibold text-ink-900 mt-4">Delete this product?</p>
+    <p class="font-display font-semibold text-ink-900 mt-4">Ushbu mahsulot o'chirilsinmi?</p>
     <p class="text-sm text-ink-900/50 mt-1.5">
-      You're about to remove <span class="font-medium text-ink-900">{{ product.name }}</span> and its stock activity history. This can't be undone.
+      Siz <span class="font-medium text-ink-900">{{ product.name }}</span> mahsulotini va uning zaxira harakati tarixini o'chirmoqchisiz. Buni bekor qilib bo'lmaydi.
     </p>
 
     <div class="flex gap-3 mt-6">
-      <button type="button" onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
-      <a href="{% url 'delete_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold transition text-center">Delete</a>
+      <button type="button" onclick="closeDeleteModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Bekor qilish</button>
+      <a href="{% url 'delete_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-rust-500 hover:bg-rust-600 text-white text-sm font-semibold transition text-center">O'chirish</a>
     </div>
   </div>
 </div>
@@ -262,20 +258,20 @@
       </svg>
     </div>
     {% if product.active %}
-    <p class="font-display font-semibold text-ink-900 mt-4">Archive this product?</p>
+    <p class="font-display font-semibold text-ink-900 mt-4">Ushbu mahsulot arxivlansinmi?</p>
     <p class="text-sm text-ink-900/50 mt-1.5">
-      <span class="font-medium text-ink-900">{{ product.name }}</span> will be hidden from the product list and Point of Sale, but its history and stock stay intact. You can unarchive it later.
+      <span class="font-medium text-ink-900">{{ product.name }}</span> mahsulotlar ro'yxati va kassadan yashiriladi, ammo uning tarixi va zaxirasi saqlanib qoladi. Keyinroq arxivdan qaytarishingiz mumkin.
     </p>
 
     <div class="flex gap-3 mt-6">
-      <button type="button" onclick="closeArchiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
-      <a href="{% url 'archive_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold transition text-center">Archive</a>
+      <button type="button" onclick="closeArchiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Bekor qilish</button>
+      <a href="{% url 'archive_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold transition text-center">Arxivlash</a>
     </div>
     {% else %}
-    <p class="font-display font-semibold text-ink-900 mt-4">Unarchive this product?</p>
+    <p class="font-display font-semibold text-ink-900 mt-4">Ushbu mahsulot arxivdan chiqarilsinmi?</p>
     <div class="flex gap-3 mt-6">
-      <button type="button" onclick="closeArchiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Cancel</button>
-      <a href="{% url 'unarchive_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold transition text-center">Unarchive</a>
+      <button type="button" onclick="closeArchiveModal()" class="flex-1 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-paper-50">Bekor qilish</button>
+      <a href="{% url 'unarchive_product' product.id %}" class="flex-1 py-2.5 rounded-xl bg-ink-900 hover:bg-ink-800 text-white text-sm font-semibold transition text-center">Arxivdan chiqarish</a>
     </div>
     {% endif %}
   </div>
@@ -300,8 +296,7 @@
   function openReceiveModal() {
     document.getElementById('rmCurrentStock').textContent = fmt0(currentStock);
     document.getElementById('rmQtyInput').value = '';
-    document.getElementById('rmRefInput').value = '';
-    document.getElementById('rmNewTotal').textContent = `${fmt0(currentStock)} units`;
+    document.getElementById('rmNewTotal').textContent = `${fmt0(currentStock)} dona`;
 
     const modal = document.getElementById('receiveModal');
     modal.dataset.show = 'true';
@@ -318,7 +313,7 @@
   document.getElementById('rmQtyInput').addEventListener('input', e => {
     const qty = parseFloat(e.target.value);
     const total = currentStock + (isNaN(qty) ? 0 : qty);
-    document.getElementById('rmNewTotal').textContent = `${fmt0(total)} units`;
+    document.getElementById('rmNewTotal').textContent = `${fmt0(total)} dona`;
   });
 
   function confirmReceiveStock() {
@@ -328,14 +323,13 @@
     currentStock += qty;
     renderStock();
 
-    const ref = document.getElementById('rmRefInput').value.trim();
     const list = document.getElementById('stockActivityList');
     const row = document.createElement('div');
     row.className = 'px-6 py-3.5 flex items-center justify-between';
     row.innerHTML = `
       <div>
-        <p class="text-sm font-medium text-ink-900">Stock received</p>
-        <p class="text-xs text-ink-900/40 mt-0.5">${ref ? ref : 'Manual adjustment'} · Just now</p>
+        <p class="text-sm font-medium text-ink-900">Zaxira qabul qilindi</p>
+        <p class="text-xs text-ink-900/40 mt-0.5">Qo'lda o'zgartirish · Hozirgina</p>
       </div>
       <span class="font-mono text-sm font-semibold text-pine-600">+${fmt0(qty)}</span>
     `;
