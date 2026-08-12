@@ -151,6 +151,7 @@ def dashboard(request):
 
 
     context = {
+        "today_total_expenses": Expense.objects.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0,
         "prev_month_param": prev_month_param,
         "next_month_param": next_month_param,
         "today_sales": today_sales,
@@ -320,9 +321,13 @@ def expenses(request):
     
 
     #expense by category
-    expenses_by_category = {
-        item['category__name']: item['total'] or 0 for item in expenses.values("category__name").annotate(total=Sum('expense'))
-        }
+    expenses_by_category = [{
+        "name": item['category__name'], 
+        "total": item['total'] or 0, 
+        "id": item["category__id"],
+    }
+        for item in expenses.values("category__name", "category__id").annotate(total=Sum('expense'))
+    ]
     category_most_expenses = expenses.values("category__name").annotate(total=Sum("expense")).order_by("-total").first()
     
     context = {
@@ -354,11 +359,11 @@ def category_detail(request, cat):
     today = now.date()
     month_beginning = today.replace(day=1)
 
-    total_expenses = Expense.objects.filter(category__name=cat).aggregate(Sum("expense"))["expense__sum"] or 0
-    month_expenses = Expense.objects.filter(category__name=cat, created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
-    expenses = Expense.objects.filter(category__name=cat)
+    total_expenses = Expense.objects.filter(category__id=cat).aggregate(Sum("expense"))["expense__sum"] or 0
+    month_expenses = Expense.objects.filter(category__id=cat, created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+    expenses = Expense.objects.filter(category__id=cat)
     context = {
-        "category": ExpenseCategory.objects.get(name=cat),
+        "category": ExpenseCategory.objects.get(id=cat),
         "total_expenses": total_expenses,
         "this_month_expenses": month_expenses,
         "expenses": expenses,

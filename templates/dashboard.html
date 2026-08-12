@@ -116,18 +116,16 @@ if ('serviceWorker' in navigator) {
 
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdolar</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ today_sales.count }}</p>
-            <p class="text-xs font-mono {% if difference >= 0 %}text-pine-600{% else %}text-rust-500{% endif %} mt-1">
-                {% if difference >= 0 %}▲{% else %}▼{% endif %} {{ difference }} kechagiga nisbatan</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ today_total_expenses }} so'm</p>
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Mahsulotlar narxi</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_sale_price }} so'm</p>
+            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Maxsulotlar narxi</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_sale_price|floatformat:0 }} so'm</p>
           </div>
           <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
             <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Maxsulotlar tannarxi</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_total_vendor }} so'm</p>
+            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_total_vendor|floatformat:0 }} so'm</p>
           </div>
         </div>
       </div>
