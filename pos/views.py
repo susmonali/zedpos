@@ -12,7 +12,7 @@ import calendar
 from django.db.models.functions import Coalesce
 
 import json
-
+from django.db import transaction
 from django.http import HttpResponse
 from django.conf import settings
 import os
@@ -129,6 +129,8 @@ def dashboard(request):
         })
 
     #REPORTS
+    today_profit = aggregate_period(today, today)
+
     yesterday_period = aggregate_period(yesterday, yesterday)
     week_period = aggregate_period(today - timedelta(days=7), today)
     month_param = request.GET.get("month")
@@ -151,6 +153,7 @@ def dashboard(request):
 
 
     context = {
+        "today_profit": today_profit["profit"],
         "today_total_expenses": Expense.objects.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0,
         "prev_month_param": prev_month_param,
         "next_month_param": next_month_param,
@@ -188,31 +191,36 @@ def dashboard(request):
     return render(request, "dashboard.html", context)
 
 def point_of_sale(request):
-    last_sale = Sale.objects.last()
-    context = {
-        "products": Product.objects.filter(active=True),
-        "current_sale_id": (last_sale.id + 1) if last_sale else 1
-    }
     if request.method == "POST":
         products = json.loads(request.body)['items']
-        sale = Sale.objects.create(created_at=localtime(), total=0)
+
+        # Step 1: pre-fetch and validate everything before writing anything
+        product_map = {}
         for key, item in products.items():
             product = Product.objects.get(id=key)
-            qty = item.get('qty')
-            if not qty:
-                qty = item.get('weight')
-            if qty>product.qty:
-                return JsonResponse({"message": f"Not enough products! - { product.name }"})
-            price = item.get('price')
-            sale_item = SaleItem.objects.create(product=product, sale=sale, price=qty*price, qty=float(qty), profit=float((product.sales_price-product.vendor_cost)*qty))
-            product.qty-=qty
-            product.save()
-            sale.total+=(qty*price)
-        sale.save()
+            qty = item.get('qty') or item.get('weight')
+            if qty > product.qty:
+                return JsonResponse({"message": f"Not enough products! - {product.name}"})
+            product_map[key] = (product, qty, item.get('price'))
+
+        # Step 2: only now create the sale, atomically
+        with transaction.atomic():
+            sale = Sale.objects.create(created_at=localtime(), total=0)
+            for key, (product, qty, price) in product_map.items():
+                SaleItem.objects.create(
+                    product=product, sale=sale,
+                    price=qty * price, qty=float(qty),
+                    profit=float((product.sales_price - product.vendor_cost) * qty)
+                )
+                product.qty -= qty
+                product.save()
+                sale.total += (qty * price)
+            sale.save()
+
         return JsonResponse({
             "status": "ok",
-            "sale_id": last_sale.id,
-            "next_sale_id": last_sale.id + 1,
+            "sale_id": sale.id,
+            "next_sale_id": sale.id + 1,
             "sale_total": sale.total,
             "updated_stock": {
                 str(item.product.id): item.product.qty
@@ -220,9 +228,10 @@ def point_of_sale(request):
             }
         })
 
+    context = {
+        "products": Product.objects.filter(active=True),
+    }
     return render(request, "pos.html", context)
-
-
 def products_list(request):
     context = {
         "products": Product.objects.all().order_by("-active")
@@ -265,7 +274,7 @@ def product_detail(request, i):
     return render(request, "product-detail.html", context)
 
 def delete_product(request, i):
-    Product.objects.get(id=i).delete
+    Product.objects.get(id=i).delete()
     return redirect("/products/")
 
 def archive_product(request, i):
@@ -370,3 +379,9 @@ def category_detail(request, cat):
     }
     return render(request, "category_detail.html", context)
 
+
+def add_category(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        ExpenseCategory.objects.create(name=name)
+        return redirect("/expenses/")
