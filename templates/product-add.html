@@ -2,182 +2,187 @@
 <!DOCTYPE html>
 <html lang="uz">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karavan Market — Mahsulot qo'shish</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karavan Market — Mahsulot qo'shish</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="{% static 'css/output.css' %}">
-<link rel="manifest" href="{% url 'manifest' %}">
-<meta name="theme-color" content="#1a1a2e">
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register("{% url 'service_worker' %}");
-}
-</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="{% url 'manifest' %}">
+    <meta name="theme-color" content="#111827">
 
-<style>
-  html { scroll-behavior: smooth; }
-  body { -webkit-font-smoothing: antialiased; }
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register("{% url 'service_worker' %}");
+    }
+    </script>
 
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #D8D5C8; border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: #C7C3B2; }
-
-  .nav-item[data-active="true"] {
-    background-color: #16302A;
-    color: #FCAB10;
-  }
-
-  :focus-visible { outline: 2px solid #FCAB10; outline-offset: 2px; }
-
-  .field-input {
-    width: 100%;
-    padding: 0.625rem 0.875rem;
-    border-radius: 0.75rem;
-    background: #FFFFFF;
-    border: 1px solid #E4E2D8;
-    font-size: 0.875rem;
-    color: #0F211D;
-  }
-  .field-input:focus { outline: none; box-shadow: 0 0 0 2px #FCAB10; border-color: #FCAB10; }
-  .field-input::placeholder { color: rgba(15,33,29,0.35); }
-
-  .field-label {
-    display: block;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    color: rgba(15,33,29,0.7);
-    margin-bottom: 0.375rem;
-  }
-
-  .unit-toggle[data-active="true"] {
-    background-color: #16302A;
-    color: #F6F5F0;
-    border-color: #16302A;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
-  }
-</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
 
-<body class="font-body bg-paper-50 text-ink-900 h-screen overflow-hidden">
+<body class="bg-gray-50 text-gray-900 antialiased h-screen flex flex-col md:flex-row overflow-hidden">
 
-<div class="flex h-screen">
-
-  <!-- ============ SIDEBAR ============ -->
-  <aside class="w-44 shrink-0 bg-ink-900 text-paper-100 flex flex-col py-6 px-3">
-    <div class="px-2 mb-8">
-      <p class="font-display font-semibold tracking-wide text-paper-50">KARAVAN</p>
-      <p class="text-[10px] tracking-widest text-paper-100/40 uppercase">Market</p>
+    <!-- MOBIL UCHUN TOP-BAR (HAMBURGER MENYU) -->
+    <div class="md:hidden bg-gray-900 text-white px-4 py-3 flex items-center justify-between shrink-0 border-b border-gray-800">
+        <div class="flex items-center gap-3">
+            <button type="button" onclick="toggleSidebar()" aria-label="Open Menu" class="p-2 text-gray-200 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <div>
+                <h2 class="text-base font-bold tracking-wider leading-none">KARAVAN</h2>
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest leading-none mt-0.5">Market</p>
+            </div>
+        </div>
+        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">Mahsulotlar</span>
     </div>
 
-    <nav class="flex flex-col gap-1">
-      <a href="{% url 'dashboard' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Boshqaruv paneli</a>
-      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Kassa</a>
-      <a href="{% url 'products' %}" data-active="true" class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Mahsulotlar</a>
-      <a href="{% url 'expenses' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Xarajatlar</a>
-    </nav>
+    <!-- MOBIL MENYU FONINI QORAYTIRISH (OVERLAY) -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm transition-opacity md:hidden"></div>
 
-  </aside>
-
-  <!-- ============ MAIN ============ -->
-  <div class="flex-1 min-w-0 flex flex-col">
-
-    <!-- Top bar -->
-    <header class="px-8 pt-6 pb-4 shrink-0">
-      <a href="{% url 'products' %}" class="text-sm text-ink-900/50 hover:text-ink-900 transition">← Mahsulotlar</a>
-      <h1 class="font-display text-2xl font-semibold text-ink-900 mt-1">Mahsulot qo'shish</h1>
-      <p class="text-sm text-ink-900/50 mt-0.5">Karavan Market katalogiga yangi mahsulot qo'shing</p>
-    </header>
-
-    <!-- Form -->
-    <div class="flex-1 overflow-y-auto px-8 pb-8">
-      <form method="POST" action="{% url 'product_add' %}" class="max-w-2xl"> {% csrf_token %}
-
-        <div class="bg-white border border-paper-200 rounded-2xl p-6 space-y-5">
-
-          <div>
-            <label class="field-label" for="name">Mahsulot nomi</label>
-            <input class="field-input" type="text" id="name" name="name" placeholder="masalan, To'liq yog'li sut 1L" required>
-          </div>
-
-          <div>
+    <!-- YON MENYU (SIDEBAR) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col shrink-0 transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0">
+        <div class="p-5 flex justify-between items-center border-b border-gray-800 md:border-b-0">
             <div>
-              <label class="field-label" for="barcode">Shtrix-kod / PLU kodi</label>
-              <input class="field-input font-mono" type="text" id="barcode" name="barcode" placeholder="masalan, 2012222222226" required>
+                <h2 class="text-xl font-bold tracking-wider">KARAVAN</h2>
+                <p class="text-xs text-gray-400 uppercase tracking-widest">Market</p>
             </div>
+            <!-- Menyuni yopish tugmasi (X) -->
+            <button type="button" onclick="toggleSidebar()" class="md:hidden p-2 text-gray-400 hover:text-white rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        
+        <nav class="flex flex-col px-4 py-4 gap-1.5 overflow-y-auto">
+            <a href="{% url 'dashboard' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Boshqaruv paneli</a>
+            <a href="{% url 'pos' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Kassa</a>
+            <a href="{% url 'products' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white transition">Mahsulotlar</a>
+            <a href="{% url 'expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Xarajatlar</a>
+        </nav>
+    </aside>
 
-          </div>
-
-          <div>
-            <label class="field-label">Narxlash usuli</label>
-            <div class="grid grid-cols-2 gap-2">
-              <label class="unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="true">
-                <input type="radio" name="pricing_unit" value="unit" class="hidden" checked>
-                Dona
-              </label>
-              <label class="unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 rounded-xl border border-paper-200 cursor-pointer transition" data-active="false">
-                <input type="radio" name="pricing_unit" value="kg" class="hidden">
-                Og'irlik (kg)
-              </label>
-            </div>
-            <p class="text-xs text-ink-900/40 mt-1.5">Og'irlik bo'yicha narxlanadigan mahsulotlar kassada tortish yoki summa orqali kiritiladi.</p>
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="field-label" for="price">Narx</label>
-              <div class="relative">
-                <input class="field-input pl-2 font-mono pr-16" type="number" min="0" step="0.01" id="price" name="price" placeholder="0.00" required>
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-mono text-ink-900/40">so'm</span>
+<!-- ASOSIY MASHG'ULOT MAYDONI -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <!-- CONTENT CONTAINER WITH UNIFORM PADDING -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6">
+            <div class="max-w-2xl">
+                
+                <!-- HEADER (TITLE) -->
+                <div class="mb-6">
+                    <a href="{% url 'products' %}" class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-blue-600 transition mb-1">
+                        ← Mahsulotlar
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-900 leading-tight">Mahsulot qo'shish</h1>
                 </div>
+
+                <!-- FORM CARD -->
+                <form method="POST" action="{% url 'product_add' %}" class="space-y-6">
+                    {% csrf_token %}
+
+                    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-4 md:p-6 space-y-5">
+
+                        <!-- Mahsulot nomi -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="name">Mahsulot nomi</label>
+                            <input class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition" type="text" id="name" name="name" placeholder="masalan, To'liq yog'li sut 1L" required>
+                        </div>
+
+                        <!-- Shtrix-kod -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="barcode">Shtrix-kod / PLU kodi</label>
+                            <input class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none transition" type="text" id="barcode" name="barcode" placeholder="masalan, 2012222222226" required>
+                        </div>
+
+                        <!-- Narxlash usuli -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Narxlash usuli</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 px-4 rounded-lg border cursor-pointer transition select-none bg-blue-600 text-white border-blue-600" data-active="true">
+                                    <input type="radio" name="pricing_unit" value="unit" class="hidden" checked>
+                                    Dona
+                                </label>
+                                <label class="unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 px-4 rounded-lg border border-gray-300 cursor-pointer transition select-none bg-white text-gray-700 hover:bg-gray-50" data-active="false">
+                                    <input type="radio" name="pricing_unit" value="kg" class="hidden">
+                                    Og'irlik (kg)
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1.5">Og'irlik bo'yicha narxlanadigan mahsulotlar kassada tortish yoki summa orqali kiritiladi.</p>
+                        </div>
+
+                        <!-- Narx & Tannarx -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" for="price">Narx</label>
+                                <div class="relative">
+                                    <input class="w-full pl-3 pr-16 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none transition" type="number" min="0" step="0.01" id="price" name="price" placeholder="0.00" required>
+                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-mono text-gray-400 select-none">so'm</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" for="vendor_cost">Tannarxi</label>
+                                <div class="relative">
+                                    <input class="w-full pl-3 pr-16 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none transition" type="number" min="0" step="0.01" id="vendor_cost" name="vendor_cost" placeholder="0.00" required>
+                                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-mono text-gray-400 select-none">so'm</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mavjud zaxira -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1" for="stock">Mavjud zaxira</label>
+                                <input class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:outline-none transition" type="number" min="0" step="0.01" id="stock" name="qty" placeholder="0">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TUGMALAR -->
+                    <div class="flex items-center gap-3">
+                        <button type="submit" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition shadow-sm">
+                            Mahsulotni saqlash
+                        </button>
+                        <a href="{% url 'products' %}" class="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 text-sm font-medium transition">
+                            Bekor qilish
+                        </a>
+                    </div>
+
+                </form>
             </div>
-            <div>
-              <label class="field-label" for="vendor_cost">Tannarxi</label>
-              <div class="relative">
-                <input class="field-input pl-2 font-mono pr-16 " type="number" min="0" step="0.01" id="vendor_cost" name="vendor_cost" placeholder="0.00" required>
-                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-mono text-ink-900/40">so'm</span>
-              </div>
-            </div>
-
-          </div>
-
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-            <label class="field-label" for="stock">Mavjud zaxira</label>
-            <input class="field-input font-mono max-w-[12rem]" type="number" min="0" step="0.01" id="stock" name="qty" placeholder="0">
-          </div>
-
-          </div>
-
         </div>
-
-        <div class="flex items-center gap-3 mt-6">
-          <button type="submit" class="px-5 py-2.5 rounded-xl bg-pine-600 hover:bg-pine-700 text-white text-sm font-semibold transition">Mahsulotni saqlash</button>
-          <a href="{% url 'products' %}" class="px-5 py-2.5 rounded-xl border border-paper-200 text-sm font-medium text-ink-900/60 hover:bg-white transition">Bekor qilish</a>
-        </div>
-
-      </form>
     </div>
-  </div>
-</div>
 
 <script>
-  // Purely presentational toggle for the pricing-unit radio pair
-  document.querySelectorAll('.unit-toggle').forEach(label => {
-    label.addEventListener('click', () => {
-      document.querySelectorAll('.unit-toggle').forEach(l => l.dataset.active = 'false');
-      label.dataset.active = 'true';
+    // TOGGLE SIDEBAR (Mobil menyuni ochish/yopish)
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+
+    // Toggle styling for pricing unit radio option
+    document.querySelectorAll('.unit-toggle').forEach(label => {
+        label.addEventListener('click', () => {
+            document.querySelectorAll('.unit-toggle').forEach(l => {
+                l.dataset.active = 'false';
+                l.className = 'unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 px-4 rounded-lg border border-gray-300 cursor-pointer transition select-none bg-white text-gray-700 hover:bg-gray-50';
+            });
+            label.dataset.active = 'true';
+            label.className = 'unit-toggle flex items-center justify-center gap-2 text-sm font-medium py-2.5 px-4 rounded-lg border cursor-pointer transition select-none bg-blue-600 text-white border-blue-600';
+            const radio = label.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        });
     });
-  });
 </script>
 
 </body>

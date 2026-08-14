@@ -3,491 +3,429 @@
 {% load static %}
 <html lang="uz">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karavan Market — Boshqaruv paneli</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karavan Market — Boshqaruv paneli</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="{% static 'css/output.css' %}">
-<link rel="manifest" href="{% url 'manifest' %}">
-<meta name="theme-color" content="#1a1a2e">
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register("{% url 'service_worker' %}");
-}
-</script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="manifest" href="{% url 'manifest' %}">
+    <meta name="theme-color" content="#111827">
 
-<style>
-  html { scroll-behavior: smooth; }
-  body { -webkit-font-smoothing: antialiased; }
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register("{% url 'service_worker' %}");
+    }
+    </script>
 
-  /* Torn-ticket edge — reserved for the Recent Sales tape, echoing the POS receipt */
-  .ticket-notch { position: relative; }
-  .ticket-notch::before,
-  .ticket-notch::after {
-    content: "";
-    position: absolute;
-    left: 0; right: 0;
-    height: 11px;
-    background:
-      linear-gradient(-45deg, #F6F5F0 8px, transparent 0) 0 0/16px 16px,
-      linear-gradient(45deg, #F6F5F0 8px, transparent 0) 0 0/16px 16px;
-    background-repeat: repeat-x;
-  }
-  .ticket-notch::before { top: -1px; }
-  .ticket-notch::after  { bottom: -1px; transform: scaleY(-1); }
-
-  .dash-divider { border-top: 2px dashed #DBD8CC; }
-
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #D8D5C8; border-radius: 999px; }
-  ::-webkit-scrollbar-thumb:hover { background: #C7C3B2; }
-
-  .nav-item[data-active="true"] {
-    background-color: #16302A;
-    color: #FCAB10;
-  }
-
-  :focus-visible { outline: 2px solid #FCAB10; outline-offset: 2px; }
-
-  .hbar { transition: height 0.4s ease; }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
-  }
-</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .hbar { transition: height 0.4s ease; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    </style>
 </head>
 
-<body class="font-body bg-paper-50 text-ink-900 h-screen overflow-hidden">
+<body class="bg-gray-50 text-gray-900 antialiased h-screen flex flex-col md:flex-row overflow-hidden">
 
-<div class="flex h-screen">
-
-  <!-- ============ SIDEBAR ============ -->
-  <aside class="w-44 shrink-0 bg-ink-900 text-paper-100 flex flex-col py-6 px-3">
-    <div class="px-2 mb-8">
-      <p class="font-display font-semibold tracking-wide text-paper-50">KARAVAN</p>
-      <p class="text-[10px] tracking-widest text-paper-100/40 uppercase">Market</p>
-    </div>
-
-    <nav class="flex flex-col gap-1">
-      <a href="{% url 'dashboard' %}" data-active="true"  class="nav-item px-3 py-2.5 rounded-lg text-sm font-semibold transition">Boshqaruv paneli</a>
-      <a href="{% url 'pos' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Kassa </a>
-      <a href="{% url 'products' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Mahsulotlar</a>
-      <a href="{% url 'expenses' %}" data-active="false" class="nav-item px-3 py-2.5 rounded-lg text-sm font-medium text-paper-100/50 hover:text-paper-100 hover:bg-ink-800 transition">Xarajatlar</a>
-    </nav>
-
-  </aside>
-
-  <!-- ============ MAIN ============ -->
-  <div class="flex-1 min-w-0 flex flex-col">
-
-    <!-- Top bar -->
-    <header class="px-8 pt-6 pb-4 shrink-0">
-      <div class="flex items-start justify-between gap-6 flex-wrap">
-        <div>
-          <h1 class="font-display text-2xl font-semibold text-ink-900">Boshqaruv paneli</h1>
-          <p id="todayDate" class="text-sm text-ink-900/50 mt-0.5"></p>
-        </div>
-        <span id="clock" class="font-mono text-sm text-ink-900/60 hidden sm:block"></span>
-      </div>
-    </header>
-
-    <!-- Scrollable content -->
-    <div class="flex-1 overflow-y-auto px-8 pb-8 space-y-6">
-
-      <!-- Z-Report strip -->
-      <div class="bg-white border border-paper-200 rounded-2xl overflow-hidden">
-        <div class="px-6 py-3 border-b border-paper-200 flex items-center justify-between">
-          <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Bugun · X-Hisobot</p>
-          <p class="text-[11px] font-mono text-ink-900/40">{{localtime}} holatiga ko'ra</p>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-4">
-          <div class="px-6 py-5">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Umumiy savdo</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{today_sales_total | intcomma}} so'm</p>
-
-            <p class="text-xs font-mono {% if percentage_change >= 0 %}text-pine-600{% else %}text-rust-500{% endif %} mt-1">
-                {% if percentage_change >= 0 %}▲{% else %}▼{% endif %} {{percentage_change | floatformat}}% kecha {{ localtime.time }} ga nisbatan
-            </p>
-
-          </div>
-          <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ today_total_expenses }} so'm</p>
-          </div>
-          <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Maxsulotlar narxi</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_sale_price|floatformat:0 }} so'm</p>
-          </div>
-          <div class="px-6 py-5 border-t sm:border-t-0 sm:border-l border-paper-200">
-            <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Maxsulotlar tannarxi</p>
-            <p class="font-mono text-2xl font-bold text-ink-900 mt-1">{{ products_total_vendor|floatformat:0 }} so'm</p>
-          </div>
-        </div>
-      </div>
-
-          <!-- Period reports: Yesterday / 7 Days / Monthly, ticket-style panels -->
-      <div>
-        <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold mb-3 px-1">Hisobotlar</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-
-          <!-- Yesterday -->
-          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
-            <div class="px-6 flex items-center justify-between mb-4">
-              <p class="font-display text-sm font-semibold text-ink-900">Kecha</p>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Yopilgan</span>
-            </div>
-            <div class="px-6">
-              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
-              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ yesterday_all_sales }} so'm</p>
-            </div>
-            <div class="dash-divider my-4 mx-6"></div>
-            <div class="px-6 grid grid-cols-2 gap-4">
-
-              <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
-                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ yesterday_profit }} so'm</p>
-              </div>
-              <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
-                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ yesterday_expenses }} so'm</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 7 Days -->
-          <div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
-            <div class="px-6 flex items-center justify-between mb-4">
-              <p class="font-display text-sm font-semibold text-ink-900">7 kun</p>
-              <span class="text-[10px] font-mono uppercase tracking-widest text-ink-900/30 border border-ink-900/15 rounded-full px-2 py-0.5">Haftalik</span>
-            </div>
-            <div class="px-6">
-              <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
-              <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ days_7_all_sales }} so'm</p>
-            </div>
-            <div class="dash-divider my-4 mx-6"></div>
-            <div class="px-6 grid grid-cols-2 gap-4">
-              <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
-                <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ days_7_profit }} so'm</p>
-              </div>
-              <div>
-                <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
-                <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ days_7_expenses }} so'm</p>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Monthly, now with prev/next month navigation -->
-<div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
-<div class="px-6 flex items-center justify-between mb-4">
-  <p class="font-display text-sm font-semibold text-ink-900">Oylik</p>
-  <div class="flex items-center justify-between w-40 shrink-0">
-    <a href="{% url 'dashboard' %}?month={{ prev_month_param }}"
-       class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 active:bg-paper-200 transition"
-       aria-label="Oldingi oy">‹</a>
-
-    <span class="text-[10px] font-mono uppercase tracking-widest text-brand-600 border border-brand-500/30 bg-brand-500/10 rounded-full px-2 py-0.5 text-center truncate">{{ month_name }}</span>
-
-    {% if next_month_param %}
-    <a href="{% url 'dashboard' %}?month={{ next_month_param }}"
-       class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/40 hover:text-ink-900 hover:bg-paper-100 active:bg-paper-200 transition"
-       aria-label="Keyingi oy">›</a>
-    {% else %}
-    <span class="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-base text-ink-900/15 cursor-not-allowed" aria-hidden="true">›</span>
-    {% endif %}
-  </div>
-</div>
-  <div class="px-6">
-    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
-    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ month_all_sales }} so'm</p>
-  </div>
-  <div class="dash-divider my-4 mx-6"></div>
-  <div class="px-6 grid grid-cols-2 gap-4">
-    <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
-      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ month_profit }} so'm</p>
-    </div>
-    <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
-      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ month_expenses }} so'm</p>
-    </div>
-  </div>
-</div>
-
-<!-- Custom Range -->
-<div class="ticket-notch bg-white border border-paper-200 rounded-2xl py-6">
-
-
-  <form method="GET" action="{% url 'dashboard' %}" class="px-6 mb-4 space-y-3">
-    <div class="flex gap-2">
-      <label class="flex-1 min-w-0">
-        <input type="date" name="start_date" value="{{ request.GET.start_date }}"
-          class="w-full text-xs font-mono px-2 py-1.5 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
-      </label>
-      <label class="flex-1 min-w-0">
-        <input type="date" name="end_date" value="{{ request.GET.end_date }}"
-          class="w-full text-xs font-mono px-2 py-1.5 rounded-lg bg-paper-50 border border-paper-200 focus:outline-none focus:ring-2 focus:ring-brand-500">
-      </label>
-    </div>
-    <button type="submit"
-      class="w-full text-xs font-semibold px-3 py-1.5 rounded-lg bg-pine-600 hover:bg-pine-700 text-white transition">Qo'llash</button>
-  </form>
-
-  {% if custom_range_active %}
-  <div class="px-6">
-    <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Savdo</p>
-    <p class="font-mono text-2xl font-bold text-pine-600 mt-1">{{ custom_sales }} so'm</p>
-  </div>
-  <div class="dash-divider my-4 mx-6"></div>
-  <div class="px-6 grid grid-cols-2 gap-4">
-    <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Foyda</p>
-      <p class="font-mono text-sm font-semibold text-ink-900 mt-1">{{ custom_profit }} so'm</p>
-    </div>
-    <div>
-      <p class="text-[11px] uppercase tracking-widest text-ink-900/40 font-semibold">Xarajatlar</p>
-      <p class="font-mono text-sm font-semibold text-rust-500 mt-1">{{ custom_expenses }} so'm</p>
-    </div>
-  </div>
-  {% else %}
-  <div class="px-6">
-    <p class="text-xs text-ink-900/35">Sana oralig'ini tanlang va jami ko'rish uchun "Qo'llash" tugmasini bosing.</p>
-  </div>
-  {% endif %}
-</div>
-
-        </div>
-      </div>
-
-      <!-- Sales by hour + Category mix -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <!-- Sales by hour -->
-<div class="lg:col-span-2 bg-white border border-paper-200 rounded-2xl p-6 relative">
-  <div class="flex items-baseline justify-between mb-5">
-    <p class="text-sm font-semibold text-ink-900">Soatlik savdo</p>
-    <p id="chart-peak-info" class="text-xs font-mono text-ink-900/40">Eng yuqori -- · 0 so'm</p>
-  </div>
-
-  <div id="chart-bars-container" class="flex items-end gap-2 h-40 relative"></div>
-
-  <div id="chart-tooltip" class="absolute pointer-events-none opacity-0 bg-slate-900 text-white text-xs font-mono py-1 px-2 rounded shadow-md transition-opacity duration-150 -translate-x-1/2 -translate-y-full z-10"></div>
-</div>
-        <!-- Category mix -->
-          <div class="bg-white border border-paper-200 rounded-2xl p-6">
-  <p class="text-sm font-semibold text-ink-900 mb-4">Bugungi eng ko'p sotilganlar</p>
-
-  <div id="top-sellers-container" class="space-y-3"></div>
-</div>
-      </div>
-
-
-
-  </div>
-</div>
-
-<script>
-  function updateClock() {
-    const now = new Date();
-    document.getElementById('clock').textContent = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('todayDate').textContent = now.toLocaleDateString('uz-UZ', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-</script>
-
-<script>
-  const hourlyData = [
-    {% for item in sales_by_hour %}
-    {
-      hour24: Number('{{ item.hour | safe }}'),
-      value: Number('{{ item.total | safe }}') || 0
-    },
-    {% endfor %}
-  ];
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('chart-bars-container');
-    const peakInfo = document.getElementById('chart-peak-info');
-    const tooltip = document.getElementById('chart-tooltip');
-
-    if (!hourlyData || hourlyData.length === 0) return;
-
-    const format24HourLabel = (hour) => {
-      const paddedHour = String(hour).padStart(2, '0');
-      return `${paddedHour}:00`;
-    };
-
-    // Helper: Formats numbers neatly to UZS currency strings
-    const formatCurrency = (num) => {
-      // Format to standard localized digits (e.g., "257,400")
-      const formattedNumber = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0
-      }).format(num);
-
-      // Append your currency code explicitly
-      return `${formattedNumber} so'm`;
-    };
-
-    let maxVal = 0;
-    let peakHour24 = hourlyData[0].hour24;
-
-    hourlyData.forEach(item => {
-      if (item.value > maxVal) {
-        maxVal = item.value;
-        peakHour24 = item.hour24;
-      }
-    });
-
-    if (maxVal > 0) {
-      peakInfo.textContent = `Eng yuqori ${format24HourLabel(peakHour24)} · ${formatCurrency(maxVal)}`;
-    } else {
-      peakInfo.textContent = `Bugun savdo ma'lumotlari yo'q`;
-    }
-
-    let htmlContent = '';
-
-    hourlyData.forEach(item => {
-      const percentageHeight = maxVal > 0 ? (item.value / maxVal) * 100 : 0;
-
-      // Color intensity styling based on bar value height percentage
-      let brandColor = 'bg-brand-400';
-      if (percentageHeight === 100) brandColor = 'bg-brand-600';
-      else if (percentageHeight > 70) brandColor = 'bg-brand-500';
-
-      const axisLabel = String(item.hour24).padStart(2, '0');
-
-      htmlContent += `
-        <div class="flex-1 h-full flex flex-col items-center justify-end gap-1.5 group">
-          <div class="hbar w-full rounded-t ${brandColor} cursor-pointer transition-all hover:opacity-80"
-               style="height: ${percentageHeight}%"
-               data-value="${format24HourLabel(item.hour24)}: ${formatCurrency(item.value)}">
-          </div>
-          <span class="text-[10px] font-mono text-ink-900/40">${axisLabel}</span>
-        </div>
-      `;
-    });
-
-    container.innerHTML = htmlContent;
-
-    // 4. Attach Tooltip Event Listeners
-    const bars = container.querySelectorAll('.hbar');
-    bars.forEach(bar => {
-      bar.addEventListener('mouseenter', () => {
-        tooltip.textContent = bar.getAttribute('data-value');
-        tooltip.classList.replace('opacity-0', 'opacity-100');
-      });
-
-      bar.addEventListener('mousemove', (e) => {
-        const wrapperRect = container.closest('.lg\\:col-span-2').getBoundingClientRect();
-        const x = e.clientX - wrapperRect.left;
-        const y = e.clientY - wrapperRect.top;
-
-        tooltip.style.left = `${x}px`;
-        tooltip.style.top = `${y - 12}px`;
-      });
-
-      bar.addEventListener('mouseleave', () => {
-        tooltip.classList.replace('opacity-100', 'opacity-0');
-      });
-    });
-  });
-</script>
-<script>
-  // 1. BACKEND LOOP FOR DICTIONARY DATA
-  // Assuming 'top_sellers' comes as a dictionary/map from your backend
-  const sellersData = [
-    {% for item in top_sellers %}
-    {
-      name: '{{ item.name | safe }}',
-      total: Number('{{ item.total | safe }}') || 0
-    },
-    {% endfor %}
-  ];
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const container = document.getElementById('top-sellers-container');
-    if (!sellersData || sellersData.length === 0) {
-      container.innerHTML = `<p class="text-xs font-mono text-ink-900/40">Bugun uchun savdo yozuvlari mavjud emas.</p>`;
-      return;
-    }
-
-    // Sort descending by total just in case backend data is unsorted
-    sellersData.sort((a, b) => b.total - a.total);
-
-    // 2. Currency Formatter Utility (Value UZS format)
-    const formatCurrency = (num) => {
-      const formattedNumber = new Intl.NumberFormat('en-US', {
-        maximumFractionDigits: 0
-      }).format(num);
-      return `${formattedNumber} so'm`;
-    };
-
-    // 3. Find the maximum value to scale relative bar widths (100% baseline)
-    const maxVal = sellersData[0].total;
-
-    // 4. Generate progress row items dynamically
-    let htmlContent = '';
-
-    sellersData.forEach((item, index) => {
-      // Avoid division by zero
-      const percentageWidth = maxVal > 0 ? (item.total / maxVal) * 100 : 0;
-      const rankNumber = index + 1;
-
-      htmlContent += `
+    <!-- MOBIL UCHUN TEPADAGI HEADER (GAMBURGER TUGMASI BILAN) -->
+    <div class="md:hidden bg-gray-900 text-white px-4 py-3 flex items-center justify-between shrink-0 border-b border-gray-800">
         <div class="flex items-center gap-3">
-          <span class="font-mono text-xs text-ink-900/30 w-4">${rankNumber}</span>
-
-          <span class="text-sm text-ink-900 w-40 shrink-0 truncate" title="${item.name}">${item.name}</span>
-
-          <div class="flex-1 h-2 rounded-full bg-paper-100 overflow-hidden">
-            <div class="h-full bg-ink-900 transition-all duration-500" style="width: ${percentageWidth}%"></div>
-          </div>
-
-          <span class="font-mono text-sm text-ink-900/60 w-24 text-right">${formatCurrency(item.total)}</span>
+            <button type="button" onclick="toggleSidebar()" aria-label="Open Menu" class="p-2 text-gray-200 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            <div>
+                <h2 class="text-base font-bold tracking-wider leading-none">KARAVAN</h2>
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest leading-none mt-0.5">Market</p>
+            </div>
         </div>
-      `;
-    });
+        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">Boshqaruv paneli</span>
+    </div>
 
-    container.innerHTML = htmlContent;
-  });
-</script>
+    <!-- MOBIL MENYU FONINI QORAYTIRISH (OVERLAY) -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-gray-900/60 z-40 hidden backdrop-blur-sm transition-opacity md:hidden"></div>
+
+    <!-- YON MENYU (SIDEBAR) -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col shrink-0 transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0">
+        <div class="p-5 flex justify-between items-center border-b border-gray-800 md:border-b-0">
+            <div>
+                <h2 class="text-xl font-bold tracking-wider">KARAVAN</h2>
+                <p class="text-xs text-gray-400 uppercase tracking-widest">Market</p>
+            </div>
+            <button type="button" onclick="toggleSidebar()" class="md:hidden p-2 text-gray-400 hover:text-white rounded-lg">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="flex flex-col px-4 py-4 gap-1.5 overflow-y-auto">
+            <a href="{% url 'dashboard' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white transition">Boshqaruv paneli</a>
+            <a href="{% url 'pos' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Kassa</a>
+            <a href="{% url 'products' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Mahsulotlar</a>
+            <a href="{% url 'expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Xarajatlar</a>
+        </nav>
+    </aside>
+
+    <!-- ASOSIY SHABLON QISMI -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        <!-- PAGE HEADER -->
+        <header class="bg-white border-b border-gray-200 p-4 md:p-6 shrink-0 flex items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Boshqaruv paneli</h1>
+                <p id="todayDate" class="text-sm text-gray-500 mt-0.5 capitalize"></p>
+            </div>
+            <span id="clock" class="font-mono text-sm text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg hidden sm:block border border-gray-200"></span>
+        </header>
+
+        <!-- SCROLLABLE CONTENT -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+
+            <!-- Z-REPORT (X-HISOBOT) STRIP -->
+            <div class="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                <div class="px-5 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2">
+                    <p class="text-xs font-bold uppercase tracking-wider text-gray-500">Bugun · X-Hisobot</p>
+                    <p class="text-xs font-mono text-gray-400">{{localtime}} holatiga ko'ra</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
+                    <div class="p-5">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Umumiy savdo</p>
+                        <p class="font-bold text-2xl text-gray-900 mt-1">{{today_sales_total | intcomma}} so'm</p>
+                        <p class="text-xs font-medium {% if percentage_change >= 0 %}text-emerald-600{% else %}text-red-500{% endif %} mt-1">
+                            {% if percentage_change >= 0 %}▲{% else %}▼{% endif %} {{percentage_change | floatformat}}% kecha {{ localtime.time }} ga nisbatan
+                        </p>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Foyda</p>
+                        <p class="font-bold text-2xl text-gray-900 mt-1">{{today_profit|floatformat:0}} so'm</p>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Xarajatlar</p>
+                        <p class="font-bold text-2xl text-red-600 mt-1">{{ today_total_expenses }} so'm</p>
+                    </div>
+                    <div class="p-5">
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Mahsulotlar sotish narxi</p>
+                        <p class="font-bold text-2xl text-gray-900 mt-1">{{ products_sale_price|floatformat:0 }} so'm</p>
+                        <p class="text-xs text-gray-400 mt-1">
+                            Tannarx: {{ products_total_vendor|floatformat:0 }} so'm
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERIOD REPORTS -->
+            <div>
+                <p class="text-xs uppercase tracking-wider text-gray-500 font-bold mb-3 px-1">Hisobotlar</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+                    <!-- Kecha -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-sm font-bold text-gray-900">Kecha</p>
+                                <span class="text-[10px] font-mono uppercase tracking-wider text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5">Yopilgan</span>
+                            </div>
+                            <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Savdo</p>
+                            <p class="text-xl font-bold text-emerald-600 mt-0.5">{{ yesterday_all_sales }} so'm</p>
+                        </div>
+                        <div class="border-t border-gray-100 my-4"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Foyda</p>
+                                <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ yesterday_profit|floatformat:0 }} so'm</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                <p class="text-sm font-semibold text-red-500 mt-0.5">{{ yesterday_expenses|floatformat:0 }} so'm</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 7 kun -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-sm font-bold text-gray-900">7 kun</p>
+                                <span class="text-[10px] font-mono uppercase tracking-wider text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5">Haftalik</span>
+                            </div>
+                            <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Savdo</p>
+                            <p class="text-xl font-bold text-emerald-600 mt-0.5">{{ days_7_all_sales }} so'm</p>
+                        </div>
+                        <div class="border-t border-gray-100 my-4"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Foyda</p>
+                                <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ days_7_profit|floatformat:0 }} so'm</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                <p class="text-sm font-semibold text-red-500 mt-0.5">{{ days_7_expenses|floatformat:0 }} so'm</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Oylik -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-sm font-bold text-gray-900">Oylik</p>
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="{% url 'dashboard' %}?month={{ prev_month_param }}" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition" aria-label="Oldingi oy">‹</a>
+                                    <span class="text-[10px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5 truncate max-w-[80px] text-center">{{ month_name }}</span>
+                                    {% if next_month_param %}
+                                    <a href="{% url 'dashboard' %}?month={{ next_month_param }}" class="w-6 h-6 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition" aria-label="Keyingi oy">›</a>
+                                    {% else %}
+                                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 cursor-not-allowed">›</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Savdo</p>
+                            <p class="text-xl font-bold text-emerald-600 mt-0.5">{{ month_all_sales|floatformat:0 }} so'm</p>
+                        </div>
+                        <div class="border-t border-gray-100 my-4"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Foyda</p>
+                                <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ month_profit|floatformat:0 }} so'm</p>
+                            </div>
+                            <div>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                <p class="text-sm font-semibold text-red-500 mt-0.5">{{ month_expenses|floatformat:0 }} so'm</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Custom Range -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <form method="GET" action="{% url 'dashboard' %}" class="space-y-2 mb-3">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="text-xs p-1.5 rounded-lg border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full">
+                                    <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="text-xs p-1.5 rounded-lg border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none w-full">
+                                </div>
+                                <button type="submit" class="w-full text-xs font-semibold py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition">Qo'llash</button>
+                            </form>
+
+                            {% if custom_range_active %}
+                            <p class="text-xs uppercase tracking-wider text-gray-400 font-medium">Savdo</p>
+                            <p class="text-xl font-bold text-emerald-600 mt-0.5">{{ custom_sales|floatformat:0 }} so'm</p>
+                            {% else %}
+                            <p class="text-xs text-gray-400 mt-2">Sana oralig'ini tanlang va "Qo'llash" tugmasini bosing.</p>
+                            {% endif %}
+                        </div>
+
+                        {% if custom_range_active %}
+                        <div>
+                            <div class="border-t border-gray-100 my-3"></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Foyda</p>
+                                    <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ custom_profit|floatformat:0 }} so'm</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                    <p class="text-sm font-semibold text-red-500 mt-0.5">{{ custom_expenses|floatformat:0 }} so'm</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SALES BY HOUR & TOP SELLERS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Soatlik savdo -->
+                <div class="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative">
+                    <div class="flex items-baseline justify-between mb-4">
+                        <p class="text-sm font-bold text-gray-900">Soatlik savdo</p>
+                        <p id="chart-peak-info" class="text-xs font-mono text-gray-400">Eng yuqori -- · 0 so'm</p>
+                    </div>
+
+                    <div id="chart-bars-container" class="flex items-end gap-1.5 h-44 relative pt-4"></div>
+
+                    <div id="chart-tooltip" class="absolute pointer-events-none opacity-0 bg-gray-900 text-white text-xs font-mono py-1 px-2.5 rounded shadow-lg transition-opacity duration-150 -translate-x-1/2 -translate-y-full z-20"></div>
+                </div>
+
+                <!-- Top Sellers -->
+                <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                    <p class="text-sm font-bold text-gray-900 mb-4">Bugungi eng ko'p sotilganlar</p>
+                    <div id="top-sellers-container" class="space-y-3"></div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const tooltip = document.getElementById('chart-tooltip');
-    const bars = document.querySelectorAll('.hbar');
+    // SIDEBAR TOGGLE
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
 
-    bars.forEach(bar => {
-      bar.addEventListener('mouseenter', (e) => {
-        const val = bar.getAttribute('data-value');
-        tooltip.textContent = val;
-        tooltip.classList.remove('opacity-0');
-        tooltip.classList.add('opacity-100');
-      });
+    // CLOCK & DATE
+    function updateClock() {
+        const now = new Date();
+        const clockEl = document.getElementById('clock');
+        const dateEl = document.getElementById('todayDate');
+        if(clockEl) clockEl.textContent = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        if(dateEl) dateEl.textContent = now.toLocaleDateString('uz-UZ', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
 
-      bar.addEventListener('mousemove', (e) => {
-        // Find positions relative to the component container
-        const containerRect = bar.closest('.lg\\:col-span-2').getBoundingClientRect();
-        const x = e.clientX - containerRect.left;
-        const y = e.clientY - containerRect.top;
+<script>
+    // HOURLY CHART SCRIPT
+    const hourlyData = [
+        {% for item in sales_by_hour %}
+        {
+            hour24: Number('{{ item.hour | safe }}'),
+            value: Number('{{ item.total | safe }}') || 0
+        },
+        {% endfor %}
+    ];
 
-        // Position the tooltip slightly above the cursor
-        tooltip.style.left = `${x}px`;
-        tooltip.style.top = `${y - 12}px`;
-      });
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('chart-bars-container');
+        const peakInfo = document.getElementById('chart-peak-info');
+        const tooltip = document.getElementById('chart-tooltip');
 
-      bar.addEventListener('mouseleave', () => {
-        tooltip.classList.remove('opacity-100');
-        tooltip.classList.add('opacity-0');
-      });
+        if (!container || !hourlyData || hourlyData.length === 0) return;
+
+        const format24HourLabel = (hour) => `${String(hour).padStart(2, '0')}:00`;
+
+        const formatCurrency = (num) => {
+            const formattedNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num);
+            return `${formattedNumber} so'm`;
+        };
+
+        let maxVal = 0;
+        let peakHour24 = hourlyData[0] ? hourlyData[0].hour24 : 0;
+
+        hourlyData.forEach(item => {
+            if (item.value > maxVal) {
+                maxVal = item.value;
+                peakHour24 = item.hour24;
+            }
+        });
+
+        if (maxVal > 0) {
+            peakInfo.textContent = `Eng yuqori ${format24HourLabel(peakHour24)} · ${formatCurrency(maxVal)}`;
+        } else {
+            peakInfo.textContent = `Bugun savdo ma'lumotlari yo'q`;
+        }
+
+        let htmlContent = '';
+
+        hourlyData.forEach(item => {
+            const percentageHeight = maxVal > 0 ? (item.value / maxVal) * 100 : 0;
+
+            let brandColor = 'bg-blue-300';
+            if (percentageHeight === 100) brandColor = 'bg-blue-600';
+            else if (percentageHeight > 70) brandColor = 'bg-blue-500';
+            else if (percentageHeight > 30) brandColor = 'bg-blue-400';
+
+            const axisLabel = String(item.hour24).padStart(2, '0');
+
+            htmlContent += `
+                <div class="flex-1 h-full flex flex-col items-center justify-end gap-1.5 group">
+                    <div class="hbar w-full rounded-t ${brandColor} cursor-pointer transition-all hover:opacity-80"
+                         style="height: ${Math.max(percentageHeight, 4)}%"
+                         data-value="${format24HourLabel(item.hour24)}: ${formatCurrency(item.value)}">
+                    </div>
+                    <span class="text-[10px] font-mono text-gray-400">${axisLabel}</span>
+                </div>
+            `;
+        });
+
+        container.innerHTML = htmlContent;
+
+        const bars = container.querySelectorAll('.hbar');
+        bars.forEach(bar => {
+            bar.addEventListener('mouseenter', () => {
+                tooltip.textContent = bar.getAttribute('data-value');
+                tooltip.classList.replace('opacity-0', 'opacity-100');
+            });
+
+            bar.addEventListener('mousemove', (e) => {
+                const wrapperRect = container.closest('.lg\\:col-span-2').getBoundingClientRect();
+                const x = e.clientX - wrapperRect.left;
+                const y = e.clientY - wrapperRect.top;
+
+                tooltip.style.left = `${x}px`;
+                tooltip.style.top = `${y - 12}px`;
+            });
+
+            bar.addEventListener('mouseleave', () => {
+                tooltip.classList.replace('opacity-100', 'opacity-0');
+            });
+        });
     });
-  });
+</script>
+
+<script>
+    // TOP SELLERS SCRIPT
+    const sellersData = [
+        {% for item in top_sellers %}
+        {
+            name: '{{ item.name | safe }}',
+            total: Number('{{ item.total | safe }}') || 0
+        },
+        {% endfor %}
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('top-sellers-container');
+        if (!container) return;
+
+        if (!sellersData || sellersData.length === 0) {
+            container.innerHTML = `<p class="text-xs text-gray-400">Bugun uchun savdo yozuvlari mavjud emas.</p>`;
+            return;
+        }
+
+        sellersData.sort((a, b) => b.total - a.total);
+
+        const formatCurrency = (num) => {
+            const formattedNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num);
+            return `${formattedNumber} so'm`;
+        };
+
+        const maxVal = sellersData[0].total;
+        let htmlContent = '';
+
+        sellersData.forEach((item, index) => {
+            const percentageWidth = maxVal > 0 ? (item.total / maxVal) * 100 : 0;
+            const rankNumber = index + 1;
+
+            htmlContent += `
+                <div class="flex items-center gap-2.5 text-xs">
+                    <span class="font-mono text-gray-400 w-4 font-semibold">${rankNumber}</span>
+                    <span class="text-gray-800 w-32 shrink-0 truncate font-medium" title="${item.name}">${item.name}</span>
+                    <div class="flex-1 h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div class="h-full bg-gray-900 rounded-full transition-all duration-500" style="width: ${percentageWidth}%"></div>
+                    </div>
+                    <span class="font-mono text-gray-600 text-right whitespace-nowrap">${formatCurrency(item.total)}</span>
+                </div>
+            `;
+        });
+
+        container.innerHTML = htmlContent;
+    });
 </script>
 
 </body>
