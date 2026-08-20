@@ -39,10 +39,10 @@ class ExpenseCategory(models.Model):
         return self.name
 
     class Meta:
-        verbose_name_plural = "Expense Categories"
-        verbose_name = "Expense Category"
+        verbose_name_plural = "FirmExpense Categories"
+        verbose_name = "FirmExpense Category"
 
-class Expense(models.Model):
+class FirmExpense(models.Model):
     expense = models.IntegerField()
     category = models.ForeignKey(ExpenseCategory, on_delete=models.CASCADE)
     created_at = models.DateTimeField()
@@ -50,6 +50,14 @@ class Expense(models.Model):
 
     def __str__(self):
         return f"{self.expense}"
+
+class PersonalExpense(models.Model):
+    expense = models.IntegerField()
+    created_at = models.DateTimeField()
+    note = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f"{self.expense} - {self.note}"
 
 class Stock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

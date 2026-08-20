@@ -70,7 +70,8 @@
             <a href="{% url 'dashboard' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white transition">Boshqaruv paneli</a>
             <a href="{% url 'pos' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Kassa</a>
             <a href="{% url 'products' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Mahsulotlar</a>
-            <a href="{% url 'expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Xarajatlar</a>
+            <a href="{% url 'expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Firma</a>
+            <a href="{% url 'personal_expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Xarajatlar</a>
         </nav>
     </aside>
 
@@ -108,7 +109,7 @@
                         <p class="font-bold text-2xl text-gray-900 mt-1">{{today_profit|floatformat:0}} so'm</p>
                     </div>
                     <div class="p-5">
-                        <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Xarajatlar</p>
+                        <p class="text-xs uppercase tracking-wider text-gray-500 font-medium">Firma</p>
                         <p class="font-bold text-2xl text-red-600 mt-1">{{ today_total_expenses }} so'm</p>
                     </div>
                     <div class="p-5">
@@ -143,7 +144,7 @@
                                 <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ yesterday_profit|floatformat:0 }} so'm</p>
                             </div>
                             <div>
-                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Firma</p>
                                 <p class="text-sm font-semibold text-red-500 mt-0.5">{{ yesterday_expenses|floatformat:0 }} so'm</p>
                             </div>
                         </div>
@@ -166,7 +167,7 @@
                                 <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ days_7_profit|floatformat:0 }} so'm</p>
                             </div>
                             <div>
-                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Firma</p>
                                 <p class="text-sm font-semibold text-red-500 mt-0.5">{{ days_7_expenses|floatformat:0 }} so'm</p>
                             </div>
                         </div>
@@ -197,7 +198,7 @@
                                 <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ month_profit|floatformat:0 }} so'm</p>
                             </div>
                             <div>
-                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Firma</p>
                                 <p class="text-sm font-semibold text-red-500 mt-0.5">{{ month_expenses|floatformat:0 }} so'm</p>
                             </div>
                         </div>
@@ -231,7 +232,7 @@
                                     <p class="text-sm font-semibold text-gray-900 mt-0.5">{{ custom_profit|floatformat:0 }} so'm</p>
                                 </div>
                                 <div>
-                                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Xarajatlar</p>
+                                    <p class="text-[11px] uppercase tracking-wider text-gray-400 font-medium">Firma</p>
                                     <p class="text-sm font-semibold text-red-500 mt-0.5">{{ custom_expenses|floatformat:0 }} so'm</p>
                                 </div>
                             </div>

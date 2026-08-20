@@ -45,7 +45,7 @@ def aggregate_period(start, end):
     context = {
         "sales": Sale.objects.filter(created_at__date__range=(start, end)).aggregate(Sum("total"))["total__sum"] or 0,
         "profit": SaleItem.objects.filter(sale__created_at__date__range=(start, end)).aggregate(Sum("profit"))["profit__sum"] or 0,
-        "expenses": Expense.objects.filter(created_at__date__range=(start, end)).aggregate(Sum("expense"))["expense__sum"] or 0,
+        "expenses": FirmExpense.objects.filter(created_at__date__range=(start, end)).aggregate(Sum("expense"))["expense__sum"] or 0,
         "start_date": start,
         "end_date": end,
     }
@@ -132,7 +132,7 @@ def dashboard(request):
     today_profit = aggregate_period(today, today)
 
     yesterday_period = aggregate_period(yesterday, yesterday)
-    week_period = aggregate_period(today - timedelta(days=7), today)
+    week_period = aggregate_period(today - timedelta(days=6), today)
     month_param = request.GET.get("month")
     try:
         selected_month = datetime.strptime(month_param, "%Y-%m").date()
@@ -141,8 +141,9 @@ def dashboard(request):
     month_name = selected_month.strftime("%B")
     prev_month_param = (selected_month - relativedelta(months=1)).strftime("%Y-%m")
     next_month_param = (selected_month + relativedelta(months=1)).strftime("%Y-%m")if selected_month < today.replace(day=1) else None
-    last_day_num = calendar.monthrange(selected_month.year, selected_month.month)
-    month_period = aggregate_period(selected_month, selected_month+timedelta(days=last_day_num[1]))
+    last_day_num = calendar.monthrange(selected_month.year, selected_month.month)[1]
+    month_end = selected_month.replace(day=last_day_num)
+    month_period = aggregate_period(selected_month, month_end)
 
     products_sale_price = Product.objects.filter(active=True).aggregate(
        total=Sum(ExpressionWrapper(F("sales_price") * F("qty"), output_field=FloatField()))
@@ -154,7 +155,7 @@ def dashboard(request):
 
     context = {
         "today_profit": today_profit["profit"],
-        "today_total_expenses": Expense.objects.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0,
+        "today_total_expenses": FirmExpense.objects.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0,
         "prev_month_param": prev_month_param,
         "next_month_param": next_month_param,
         "today_sales": today_sales,
@@ -273,10 +274,6 @@ def product_detail(request, i):
     }
     return render(request, "product-detail.html", context)
 
-def delete_product(request, i):
-    Product.objects.get(id=i).delete()
-    return redirect("/products/")
-
 def archive_product(request, i):
     product = Product.objects.get(id=i)
     product.active = False
@@ -311,7 +308,7 @@ def expenses(request):
     last_week = today - timedelta(days=7)
     month_beginning = today.replace(day=1)
 
-    expenses = Expense.objects.all()
+    expenses = FirmExpense.objects.all()
     todays_expenses = expenses.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0
     yesterdays_expenses = expenses.filter(created_at__date=yesterday).aggregate(Sum("expense"))["expense__sum"] or 0
     weekly_expenses = expenses.filter(created_at__date__range=(last_week, today)).aggregate(Sum("expense"))["expense__sum"] or 0
@@ -349,18 +346,18 @@ def expenses(request):
         "products": Product.objects.all().order_by("-active"),
         "category_most_expenses": category_most_expenses,
         "today": today,
-        "categories": ExpenseCategory.objects.annotate(total_expense=Coalesce(Sum('expense__expense'), 0)).order_by("total_expense"),
+        "categories": ExpenseCategory.objects.annotate(total_expense=Coalesce(Sum('firmexpense__expense'), 0)).order_by("total_expense"),
     }
-    return render(request, 'expenses.html', context)
+    return render(request, 'firm-expenses.html', context)
 
-def add_expense(request):
+def add_firm_expense(request):
     if request.method == "POST":
         amount = request.POST.get("amount")
         category = ExpenseCategory.objects.get(id=int(request.POST.get("category")))
         date = request.POST.get("date")
         note = request.POST.get("note")
-        Expense.objects.create(expense=amount, category=category, created_at=date, note=note)
-    return redirect("/expenses/")
+        FirmExpense.objects.create(expense=amount, category=category, created_at=date, note=note)
+    return redirect("/firm/")
 
 
 def category_detail(request, cat):
@@ -368,9 +365,9 @@ def category_detail(request, cat):
     today = now.date()
     month_beginning = today.replace(day=1)
 
-    total_expenses = Expense.objects.filter(category__id=cat).aggregate(Sum("expense"))["expense__sum"] or 0
-    month_expenses = Expense.objects.filter(category__id=cat, created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
-    expenses = Expense.objects.filter(category__id=cat)
+    total_expenses = FirmExpense.objects.filter(category__id=cat).aggregate(Sum("expense"))["expense__sum"] or 0
+    month_expenses = FirmExpense.objects.filter(category__id=cat, created_at__date__range=(month_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0
+    expenses = FirmExpense.objects.filter(category__id=cat)
     context = {
         "category": ExpenseCategory.objects.get(id=cat),
         "total_expenses": total_expenses,
@@ -384,4 +381,32 @@ def add_category(request):
     if request.method == "POST":
         name = request.POST.get("name")
         ExpenseCategory.objects.create(name=name)
-        return redirect("/expenses/")
+        return redirect("/firm/")
+
+
+def personal_expenses(request):
+    now = localtime().now()
+    today = now.date()
+
+    month_beginning = now.date().replace(day=1)
+    month_end = now.date().replace(day=calendar.monthrange(today.year, today.month)[1])
+
+    week_beginning = now.date() - timedelta(days=6)
+
+    
+    context = {
+        "expenses": PersonalExpense.objects.all(),
+        "weekly_expenses": PersonalExpense.objects.filter(created_at__date__range=(week_beginning, today)).aggregate(Sum("expense"))["expense__sum"] or 0,
+        "todays_expenses": PersonalExpense.objects.filter(created_at__date=today).aggregate(Sum("expense"))["expense__sum"] or 0,
+        "months_expenses": PersonalExpense.objects.filter(created_at__date__range=(month_beginning, month_end)).aggregate(Sum("expense"))["expense__sum"] or 0,
+    }
+
+    return render(request, "personal_expenses.html", context)
+
+def add_expense(request):
+    if request.method == "POST":
+        expense = request.POST.get("expense")
+        created_at = request.POST.get("created_at")
+        note = request.POST.get("note")
+        PersonalExpense.objects.create(expense=expense, created_at=created_at, note=note)
+        return redirect("/personal/")

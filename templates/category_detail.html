@@ -78,7 +78,9 @@
             <a href="{% url 'dashboard' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Boshqaruv paneli</a>
             <a href="{% url 'pos' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Kassa</a>
             <a href="{% url 'products' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Mahsulotlar</a>
-            <a href="{% url 'expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white transition">Xarajatlar</a>
+            <a href="{% url 'expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-600 text-white transition">Firma</a>
+            
+            <a href="{% url 'personal_expenses' %}" class="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition">Xarajatlar</a>
         </nav>
     </aside>
 
@@ -187,7 +189,7 @@
                 <h3 class="text-lg font-bold text-gray-900">Xarajat qo'shish</h3>
                 <button onclick="closeModal('addExpenseModal')" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
-            <form method="POST" action="{% url 'add_expense' %}" class="p-6 space-y-4">
+            <form method="POST" action="{% url 'add_firm_expense' %}" class="p-6 space-y-4">
                 {% csrf_token %}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Sana</label>
